@@ -62,9 +62,10 @@ body {
 .front-cover {
     background: linear-gradient(135deg, #8b4513 0%, #6b3410 100%);
     z-index: 10;
-    transform: translateZ(20px);
+    transform: translateZ(25px);
     transition: all 0.6s cubic-bezier(0.645, 0.045, 0.355, 1);
     border: 3px solid #654321;
+    transform-origin: left center;
 }
 
 .front-cover::before {
@@ -92,7 +93,8 @@ body {
 }
 
 .front-cover.open {
-    transform: translateZ(20px) rotateY(-180deg);
+    transform: translateZ(25px) rotateY(-165deg);
+    z-index: 1;
 }
 
 .cover-content {
@@ -105,6 +107,7 @@ body {
     text-align: center;
     position: relative;
     z-index: 2;
+    backface-visibility: hidden;
 }
 
 .cover-title {
@@ -158,11 +161,16 @@ body {
     cursor: pointer;
     transition: all 0.3s;
     backdrop-filter: blur(5px);
+    backface-visibility: hidden;
 }
 
 .customize-cover-btn:hover {
     background: rgba(244, 228, 193, 0.3);
     transform: translateY(-2px);
+}
+
+.front-cover.open .customize-cover-btn {
+    display: none;
 }
 
 /* Contraportada */
@@ -177,17 +185,18 @@ body {
     position: absolute;
     left: 0;
     top: 0;
-    width: 50px;
+    width: 40px;
     height: 100%;
     background: linear-gradient(to right, #5a2d0f 0%, #8b4513 50%, #5a2d0f 100%);
-    transform-origin: left;
-    transform: translateX(-50px) rotateY(90deg);
+    transform-origin: right center;
+    transform: translateX(-40px) rotateY(90deg);
     box-shadow:
         inset 2px 0 5px rgba(0, 0, 0, 0.5),
         inset -2px 0 5px rgba(0, 0, 0, 0.5);
     display: flex;
     align-items: center;
     justify-content: center;
+    z-index: 5;
 }
 
 .spine-text {
@@ -210,10 +219,13 @@ body {
     display: flex;
     opacity: 0;
     transition: opacity 0.3s ease 0.3s;
+    z-index: 8;
+    pointer-events: none;
 }
 
 .pages-container.visible {
     opacity: 1;
+    pointer-events: all;
 }
 
 .page {
@@ -231,6 +243,7 @@ body {
     left: 0;
     border-right: 1px solid #e0d5c7;
     background: linear-gradient(to right, #f8f6e8 0%, #fffef5 15%);
+    z-index: 2;
 }
 
 .right-page {
@@ -238,11 +251,12 @@ body {
     transform-origin: left center;
     transform-style: preserve-3d;
     transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1);
-    z-index: 2;
+    z-index: 3;
 }
 
 .right-page.flipping {
     transform: rotateY(-180deg);
+    z-index: 4;
 }
 
 .page-front,
