@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Diario de Viajes</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">Mi Diario de Viajes</h1>
+
+        <div class="notebook">
+            <div class="notebook-cover"></div>
+
+            <div class="pages-container">
+                <!-- Página izquierda -->
+                <div class="page left-page">
+                    <div class="page-content">
+                        <h2>Bienvenido</h2>
+                        <p>Guarda tus recuerdos de viajes aquí</p>
+                        <div class="decorative-line"></div>
+                    </div>
+                </div>
+
+                <!-- Página derecha (la que se voltea) -->
+                <div class="page right-page" id="currentPage">
+                    <div class="page-front">
+                        <div class="page-content">
+                            <input type="text" class="location-input" placeholder="Nombre del lugar o país" id="location-0">
+                            <div class="photo-upload-area" id="photo-area-0">
+                                <label for="photo-input-0" class="upload-label">
+                                    <span class="upload-icon">📷</span>
+                                    <span class="upload-text">Click para agregar foto</span>
+                                </label>
+                                <input type="file" id="photo-input-0" class="photo-input" accept="image/*">
+                                <img class="uploaded-photo" id="preview-0" style="display: none;">
+                            </div>
+                            <textarea class="notes-area" placeholder="Escribe tus recuerdos aquí..." id="notes-0"></textarea>
+                        </div>
+                    </div>
+                    <div class="page-back">
+                        <div class="page-content">
+                            <input type="text" class="location-input" placeholder="Nombre del lugar o país" id="location-1">
+                            <div class="photo-upload-area" id="photo-area-1">
+                                <label for="photo-input-1" class="upload-label">
+                                    <span class="upload-icon">📷</span>
+                                    <span class="upload-text">Click para agregar foto</span>
+                                </label>
+                                <input type="file" id="photo-input-1" class="photo-input" accept="image/*">
+                                <img class="uploaded-photo" id="preview-1" style="display: none;">
+                            </div>
+                            <textarea class="notes-area" placeholder="Escribe tus recuerdos aquí..." id="notes-1"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="spine"></div>
+        </div>
+
+        <div class="controls">
+            <button class="nav-btn" id="prevBtn" disabled>← Anterior</button>
+            <span class="page-counter" id="pageCounter">Página 1</span>
+            <button class="nav-btn" id="nextBtn">Siguiente →</button>
+        </div>
+
+        <div class="add-page-section">
+            <button class="add-page-btn" id="addPageBtn">+ Agregar Nueva Página</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
