@@ -1132,6 +1132,219 @@ body {
     display: none;
 }
 
+/* ====== MENÚ LATERAL (SIDEBAR) ====== */
+.sidebar-menu {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 280px;
+    height: 100vh;
+    background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.5);
+    padding: 30px 20px;
+    z-index: 900;
+    overflow-y: auto;
+    transform: translateX(0);
+    transition: transform 0.3s ease;
+}
+
+.sidebar-title {
+    color: #ecf0f1;
+    font-size: 1.8em;
+    margin-bottom: 30px;
+    text-align: center;
+    border-bottom: 2px solid #ecf0f1;
+    padding-bottom: 15px;
+}
+
+.element-category {
+    margin-bottom: 25px;
+}
+
+.element-category h4 {
+    color: #bdc3c7;
+    font-size: 0.9em;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+    padding-left: 5px;
+}
+
+.element-item {
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    cursor: grab;
+    transition: all 0.3s ease;
+    user-select: none;
+}
+
+.element-item:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: translateX(5px);
+}
+
+.element-item:active {
+    cursor: grabbing;
+    opacity: 0.7;
+}
+
+.element-icon {
+    font-size: 1.8em;
+    flex-shrink: 0;
+}
+
+.element-name {
+    color: #ecf0f1;
+    font-size: 1.1em;
+    font-weight: 500;
+}
+
+.sidebar-actions {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.sidebar-btn {
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Georgia', serif;
+    font-size: 1em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.sidebar-btn:hover {
+    background: linear-gradient(135deg, #5dade2, #3498db);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+}
+
+.sidebar-btn.secondary {
+    background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+}
+
+.sidebar-btn.secondary:hover {
+    background: linear-gradient(135deg, #bdc3c7, #95a5a6);
+}
+
+/* ====== ELEMENTOS COLOCADOS EN LA PÁGINA ====== */
+.placed-element {
+    position: absolute;
+    cursor: move;
+    user-select: none;
+    transition: box-shadow 0.2s ease;
+}
+
+.placed-element:hover {
+    box-shadow: 0 0 10px rgba(52, 152, 219, 0.5);
+}
+
+.placed-element.selected {
+    outline: 2px dashed #3498db;
+    outline-offset: 4px;
+}
+
+.placed-element .delete-btn {
+    position: absolute;
+    top: -12px;
+    right: -12px;
+    width: 24px;
+    height: 24px;
+    background: #e74c3c;
+    border: 2px solid white;
+    border-radius: 50%;
+    color: white;
+    font-size: 14px;
+    line-height: 18px;
+    text-align: center;
+    cursor: pointer;
+    display: none;
+    z-index: 10;
+}
+
+.placed-element:hover .delete-btn,
+.placed-element.selected .delete-btn {
+    display: block;
+}
+
+/* Tipos de elementos */
+.placed-element.element-title {
+    font-size: 2em;
+    font-weight: bold;
+    color: #2c3e50;
+    padding: 10px 15px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 5px;
+    min-width: 150px;
+}
+
+.placed-element.element-text {
+    font-size: 1.1em;
+    color: #34495e;
+    padding: 12px 15px;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 5px;
+    min-width: 120px;
+    max-width: 300px;
+}
+
+.placed-element.element-image {
+    border: 3px solid white;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+}
+
+.placed-element.element-image img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.placed-element.element-icon {
+    font-size: 3em;
+    padding: 10px;
+}
+
+.placed-element.element-sticker {
+    font-size: 4em;
+}
+
+/* Editable content */
+.placed-element [contenteditable="true"] {
+    outline: none;
+    min-width: 50px;
+    min-height: 20px;
+}
+
+.placed-element [contenteditable="true"]:focus {
+    background: rgba(52, 152, 219, 0.1);
+}
+
+/* Drop zone indicator */
+.page-content.drop-zone-active {
+    background: rgba(52, 152, 219, 0.1);
+    outline: 2px dashed #3498db;
+    outline-offset: -10px;
+}
+
 /* ====== RESPONSIVE ====== */
 @media (max-width: 1000px) {
     .notebook-3d {

@@ -1,7 +1,7 @@
 // ===== ESTADO DE LA APLICACIÓN =====
 let appState = {
     currentPageIndex: 0, // 0 = portada, 1 = página vacía, 2 = índice, 3+ = páginas de contenido
-    viewMode: true, // true = visualización por defecto, false = edición
+    viewMode: true, // true = visualización, false = edición
     coverData: {
         title: 'Mi Diario de Viajes',
         subtitle: 'Memorias y Aventuras',
@@ -9,11 +9,12 @@ let appState = {
         texture: 'leather',
         image: null
     },
-    pages: [], // Páginas de contenido del usuario
+    pages: [], // Array de páginas con elementos posicionados
     isFlipping: false,
     bookOpened: false,
-    currentPageTemplate: null,
-    currentTemplatePageIndex: null
+    selectedElement: null,
+    draggedElement: null,
+    nextElementId: 1
 };
 
 // ===== ELEMENTOS DEL DOM =====
@@ -34,15 +35,13 @@ const elements = {
     customizeCoverBtn: document.getElementById('customizeCoverBtn'),
     coverModal: document.getElementById('coverModal'),
     closeCoverModal: document.getElementById('closeCoverModal'),
-    templateModal: document.getElementById('templateModal'),
-    closeTemplateModal: document.getElementById('closeTemplateModal'),
     coverImageInput: document.getElementById('coverImageInput'),
-    // Elementos actualizados
     editModeToggle: document.getElementById('editModeToggle'),
     notebook: document.querySelector('.notebook-3d'),
     leftArrow: document.getElementById('leftArrow'),
     rightArrow: document.getElementById('rightArrow'),
     navArrows: document.getElementById('navArrows'),
+    sidebarMenu: document.getElementById('sidebarMenu'),
     editModeControls: document.querySelectorAll('.edit-mode-controls')
 };
 
@@ -67,15 +66,26 @@ function loadData() {
 
         if (savedPages) {
             appState.pages = JSON.parse(savedPages);
+            // Actualizar nextElementId basado en los elementos existentes
+            let maxId = 0;
+            appState.pages.forEach(page => {
+                if (page.elements) {
+                    page.elements.forEach(el => {
+                        if (el.id > maxId) maxId = el.id;
+                    });
+                }
+            });
+            appState.nextElementId = maxId + 1;
         } else {
-            // Crear páginas de ejemplo
+            // Crear páginas de ejemplo vacías
             appState.pages = [
-                { location: '', template: 'single', photos: [''], notes: '' },
-                { location: '', template: 'single', photos: [''], notes: '' }
+                { elements: [] },
+                { elements: [] }
             ];
         }
     } catch (e) {
         console.error('Error cargando datos:', e);
+        appState.pages = [{ elements: [] }, { elements: [] }];
     }
 }
 
@@ -95,9 +105,11 @@ function setupEventListeners() {
         switchMode(!appState.viewMode);
     });
 
-    // Navegación (modo edición)
+    // Navegación
     elements.prevBtn.addEventListener('click', goToPreviousPage);
     elements.nextBtn.addEventListener('click', goToNextPage);
+    elements.leftArrow.addEventListener('click', goToPreviousPage);
+    elements.rightArrow.addEventListener('click', goToNextPage);
 
     // Acciones
     elements.addPageBtn.addEventListener('click', addNewPage);
@@ -163,28 +175,8 @@ function setupEventListeners() {
         }
     });
 
-    // Modal de plantillas
-    elements.closeTemplateModal.addEventListener('click', () => {
-        elements.templateModal.classList.remove('show');
-    });
-
-    elements.templateModal.addEventListener('click', (e) => {
-        if (e.target === elements.templateModal) {
-            elements.templateModal.classList.remove('show');
-        }
-    });
-
-    // Opciones de plantillas
-    document.querySelectorAll('.template-option').forEach(option => {
-        option.addEventListener('click', (e) => {
-            const template = e.currentTarget.getAttribute('data-template');
-            selectTemplate(template);
-        });
-    });
-
-    // Navegación con flechas (modo visualización)
-    elements.leftArrow.addEventListener('click', goToPreviousPage);
-    elements.rightArrow.addEventListener('click', goToNextPage);
+    // Drag and Drop de elementos desde el sidebar
+    setupDragAndDrop();
 }
 
 // ===== CAMBIO DE MODO =====
@@ -213,8 +205,10 @@ function switchMode(viewMode) {
         // Ocultar flechas de navegación
         elements.navArrows.style.display = 'none';
     }
-}
 
+    // Actualizar display para reflejar el nuevo modo
+    updateDisplay();
+}
 
 // ===== ACTUALIZAR VISIBILIDAD DE FLECHAS =====
 function updateArrowVisibility() {
@@ -293,12 +287,13 @@ function goToPreviousPage() {
             updateArrowVisibility();
         }, 600);
     } else {
-        // Navegación normal
-        elements.rightPage.classList.remove('flipping');
+        // Navegación normal - animación hacia atrás
+        elements.rightPage.style.transform = 'rotateY(180deg)';
 
         setTimeout(() => {
             appState.currentPageIndex--;
             updateDisplay();
+            elements.rightPage.style.transform = '';
             updateArrowVisibility();
             appState.isFlipping = false;
         }, 800);
@@ -340,10 +335,6 @@ function goToNextPage() {
 function goToPage(pageIndex) {
     if (pageIndex < 0 || pageIndex >= getTotalPages()) return;
 
-    // Cerrar el modal de índice si está abierto
-    elements.templateModal.classList.remove('show');
-
-    // Simular navegación
     appState.currentPageIndex = pageIndex;
 
     if (!appState.bookOpened && pageIndex > 0) {
@@ -397,7 +388,7 @@ function updatePageContent() {
     } else if (currentPageIndex > 2) {
         const leftContentPageIndex = currentPageIndex - 3;
         if (leftContentPageIndex >= 0 && leftContentPageIndex < appState.pages.length) {
-            elements.leftPageContent.innerHTML = renderPageReadOnly(appState.pages[leftContentPageIndex]);
+            elements.leftPageContent.innerHTML = renderPage(appState.pages[leftContentPageIndex], false);
         } else if (currentPageIndex === 3) {
             // Primera página de contenido, mostrar el índice a la izquierda
             elements.leftPageContent.innerHTML = renderIndex();
@@ -414,8 +405,10 @@ function updatePageContent() {
     } else if (currentPageIndex >= 3) {
         const frontContentPageIndex = currentPageIndex - 3;
         if (frontContentPageIndex >= 0 && frontContentPageIndex < appState.pages.length) {
-            elements.frontPageContent.innerHTML = renderPageEditable(frontContentPageIndex);
-            attachPageEventListeners(frontContentPageIndex, 'front');
+            elements.frontPageContent.innerHTML = renderPage(appState.pages[frontContentPageIndex], !appState.viewMode);
+            if (!appState.viewMode) {
+                attachElementEventListeners(frontContentPageIndex, 'front');
+            }
         }
     }
 
@@ -426,14 +419,18 @@ function updatePageContent() {
     } else if (currentPageIndex === 2) {
         const backContentPageIndex = 0;
         if (backContentPageIndex < appState.pages.length) {
-            elements.backPageContent.innerHTML = renderPageEditable(backContentPageIndex);
-            attachPageEventListeners(backContentPageIndex, 'back');
+            elements.backPageContent.innerHTML = renderPage(appState.pages[backContentPageIndex], !appState.viewMode);
+            if (!appState.viewMode) {
+                attachElementEventListeners(backContentPageIndex, 'back');
+            }
         }
     } else if (currentPageIndex >= 3) {
         const backContentPageIndex = currentPageIndex - 2;
         if (backContentPageIndex < appState.pages.length) {
-            elements.backPageContent.innerHTML = renderPageEditable(backContentPageIndex);
-            attachPageEventListeners(backContentPageIndex, 'back');
+            elements.backPageContent.innerHTML = renderPage(appState.pages[backContentPageIndex], !appState.viewMode);
+            if (!appState.viewMode) {
+                attachElementEventListeners(backContentPageIndex, 'back');
+            }
         } else {
             elements.backPageContent.innerHTML = '<p style="text-align: center; color: #bcaaa4; margin-top: 50px;">Fin del diario</p>';
         }
@@ -444,7 +441,9 @@ function updatePageContent() {
 function renderIndex() {
     const items = appState.pages
         .map((page, index) => {
-            const title = page.location || `Página ${index + 1}`;
+            // Buscar el primer título en la página
+            const titleElement = page.elements?.find(el => el.type === 'title');
+            const title = titleElement ? titleElement.content : `Página ${index + 1}`;
             const pageNum = index + 1;
             return `
                 <li class="index-item" data-page-index="${index + 3}">
@@ -454,6 +453,15 @@ function renderIndex() {
             `;
         })
         .join('');
+
+    setTimeout(() => {
+        document.querySelectorAll('.index-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                const targetPage = parseInt(e.currentTarget.getAttribute('data-page-index'));
+                goToPage(targetPage);
+            });
+        });
+    }, 0);
 
     return `
         <div class="index-page">
@@ -465,204 +473,314 @@ function renderIndex() {
     `;
 }
 
-function renderPageReadOnly(pageData) {
-    const photoHTML = pageData.photos && pageData.photos.filter(p => p).length > 0
-        ? renderPhotoTemplateReadOnly(pageData.template, pageData.photos)
-        : '';
+function renderPage(pageData, editable) {
+    if (!pageData || !pageData.elements) {
+        return '<div style="height: 100%; position: relative;"></div>';
+    }
+
+    const elementsHTML = pageData.elements.map(el => renderElement(el, editable)).join('');
+
+    return `<div style="height: 100%; position: relative;">${elementsHTML}</div>`;
+}
+
+function renderElement(element, editable) {
+    const { id, type, x, y, width, height, content } = element;
+    const deleteBtn = editable ? '<span class="delete-btn" onclick="deleteElement(' + id + ')">×</span>' : '';
+
+    let innerContent = '';
+    const editableAttr = editable ? 'contenteditable="true"' : '';
+
+    switch (type) {
+        case 'title':
+            innerContent = `<div ${editableAttr} data-element-id="${id}" data-field="content">${content || 'Título'}</div>`;
+            break;
+        case 'text':
+            innerContent = `<div ${editableAttr} data-element-id="${id}" data-field="content">${content || 'Texto'}</div>`;
+            break;
+        case 'image':
+            if (content) {
+                innerContent = `<img src="${content}" alt="Imagen">`;
+            } else {
+                innerContent = editable ? `<label style="cursor:pointer; display:block; padding:20px; text-align:center; background:rgba(0,0,0,0.05);">
+                    <input type="file" accept="image/*" data-element-id="${id}" style="display:none;" onchange="handleImageUpload(event, ${id})">
+                    📷 Click para subir imagen
+                </label>` : '';
+            }
+            break;
+        case 'icon':
+            innerContent = `<div ${editableAttr} data-element-id="${id}" data-field="content">${content || '⭐'}</div>`;
+            break;
+        case 'sticker':
+            innerContent = `<div ${editableAttr} data-element-id="${id}" data-field="content">${content || '🎨'}</div>`;
+            break;
+    }
+
+    const widthStyle = width ? `width: ${width}px;` : '';
+    const heightStyle = height ? `height: ${height}px;` : '';
 
     return `
-        <div style="height: 100%; display: flex; flex-direction: column; gap: 15px;">
-            <h3 style="color: #4e342e; font-size: 1.5em; margin-bottom: 10px;">${pageData.location || 'Sin título'}</h3>
-            ${photoHTML}
-            <div style="color: #6d4c41; line-height: 1.6; font-size: 1em; flex: 1; overflow-y: auto;">
-                ${pageData.notes || 'Sin notas'}
-            </div>
+        <div class="placed-element element-${type}"
+             data-element-id="${id}"
+             style="left: ${x}px; top: ${y}px; ${widthStyle} ${heightStyle}">
+            ${deleteBtn}
+            ${innerContent}
         </div>
     `;
 }
 
-function renderPageEditable(pageIndex) {
-    const pageData = appState.pages[pageIndex];
+// ===== DRAG AND DROP SYSTEM =====
+function setupDragAndDrop() {
+    // Drag start desde elementos del sidebar
+    document.querySelectorAll('.element-item').forEach(item => {
+        item.addEventListener('dragstart', (e) => {
+            const elementType = e.target.getAttribute('data-element-type');
+            e.dataTransfer.setData('elementType', elementType);
+            e.dataTransfer.effectAllowed = 'copy';
+        });
+    });
 
-    return `
-        <input type="text"
-               class="location-input"
-               placeholder="Nombre del lugar o país"
-               data-page-index="${pageIndex}"
-               value="${pageData.location || ''}">
-
-        <div class="photo-template-container ${pageData.template || 'template-single'}"
-             id="photo-container-${pageIndex}">
-            <div class="template-selector">
-                <button class="select-template-btn" data-page-index="${pageIndex}">
-                    📐 Cambiar diseño
-                </button>
-            </div>
-            ${renderPhotoTemplate(pageData.template || 'single', pageData.photos || [''], pageIndex)}
-        </div>
-
-        <textarea class="notes-area"
-                  placeholder="Escribe tus recuerdos aquí..."
-                  data-page-index="${pageIndex}">${pageData.notes || ''}</textarea>
-    `;
+    // Configurar drop zones en las páginas
+    setupDropZones();
 }
 
-function renderPhotoTemplate(template, photos, pageIndex) {
-    const templates = {
-        'single': 1,
-        'double-horizontal': 2,
-        'double-vertical': 2,
-        'triple': 3,
-        'quad': 4,
-        'collage': 3,
-        'panoramic': 1,
-        'portrait': 1,
-        'triple-horizontal': 3,
-        'grid-5': 5,
-        'grid-6': 6,
-        'polaroid': 3
+function setupDropZones() {
+    [elements.frontPageContent, elements.backPageContent].forEach(pageContent => {
+        pageContent.addEventListener('dragover', (e) => {
+            if (!appState.viewMode) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'copy';
+                pageContent.classList.add('drop-zone-active');
+            }
+        });
+
+        pageContent.addEventListener('dragleave', (e) => {
+            pageContent.classList.remove('drop-zone-active');
+        });
+
+        pageContent.addEventListener('drop', (e) => {
+            e.preventDefault();
+            pageContent.classList.remove('drop-zone-active');
+
+            if (appState.viewMode) return;
+
+            const elementType = e.dataTransfer.getData('elementType');
+            if (!elementType) return;
+
+            // Calcular posición relativa al page-content
+            const rect = pageContent.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            // Determinar qué página estamos editando
+            const pageIndex = getCurrentEditablePageIndex(pageContent);
+            if (pageIndex === -1) return;
+
+            // Crear nuevo elemento
+            const newElement = createNewElement(elementType, x, y);
+
+            // Asegurar que la página existe
+            if (!appState.pages[pageIndex]) {
+                appState.pages[pageIndex] = { elements: [] };
+            }
+            if (!appState.pages[pageIndex].elements) {
+                appState.pages[pageIndex].elements = [];
+            }
+
+            // Agregar elemento a la página
+            appState.pages[pageIndex].elements.push(newElement);
+
+            saveData();
+            updateDisplay();
+        });
+    });
+}
+
+function getCurrentEditablePageIndex(pageContentElement) {
+    const { currentPageIndex } = appState;
+
+    if (pageContentElement === elements.frontPageContent) {
+        return currentPageIndex - 3;
+    } else if (pageContentElement === elements.backPageContent) {
+        if (currentPageIndex === 2) return 0;
+        return currentPageIndex - 2;
+    }
+
+    return -1;
+}
+
+function createNewElement(type, x, y) {
+    const element = {
+        id: appState.nextElementId++,
+        type: type,
+        x: Math.max(0, Math.min(x, 400)), // Limitar dentro de la página
+        y: Math.max(0, Math.min(y, 500)),
+        content: getDefaultContent(type)
     };
 
-    const numSlots = templates[template] || 1;
-    const slots = [];
-
-    for (let i = 0; i < numSlots; i++) {
-        const photo = photos[i] || '';
-        slots.push(`
-            <div class="photo-slot" data-slot-index="${i}">
-                ${photo ? `<img src="${photo}" alt="Foto ${i + 1}">` : `
-                    <label class="photo-slot-label" for="photo-input-${pageIndex}-${i}">
-                        <span class="photo-slot-icon">📷</span>
-                        <span>Agregar foto</span>
-                    </label>
-                `}
-                <input type="file"
-                       id="photo-input-${pageIndex}-${i}"
-                       data-page-index="${pageIndex}"
-                       data-slot-index="${i}"
-                       accept="image/*">
-            </div>
-        `);
+    // Agregar dimensiones para imágenes
+    if (type === 'image') {
+        element.width = 200;
+        element.height = 150;
     }
 
-    return slots.join('');
+    return element;
 }
 
-function renderPhotoTemplateReadOnly(template, photos) {
-    const validPhotos = photos.filter(p => p);
-    if (validPhotos.length === 0) return '';
-
-    const photoElements = validPhotos.map(photo =>
-        `<img src="${photo}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px;">`
-    ).join('');
-
-    return `<div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px;">${photoElements}</div>`;
+function getDefaultContent(type) {
+    switch (type) {
+        case 'title': return 'Nuevo Título';
+        case 'text': return 'Nuevo texto';
+        case 'icon': return '⭐';
+        case 'sticker': return '🎨';
+        case 'image': return null;
+        default: return '';
+    }
 }
 
-// ===== EVENTOS DE PÁGINA =====
-function attachPageEventListeners(pageIndex, side) {
-    // Input de ubicación
-    const locationInput = document.querySelector(`input[data-page-index="${pageIndex}"]`);
-    if (locationInput) {
-        locationInput.addEventListener('input', (e) => {
-            appState.pages[pageIndex].location = e.target.value;
-            saveData();
-        });
-    }
+// ===== MANIPULACIÓN DE ELEMENTOS =====
+function attachElementEventListeners(pageIndex, side) {
+    const pageContent = side === 'front' ? elements.frontPageContent : elements.backPageContent;
 
-    // Textarea de notas
-    const notesArea = document.querySelector(`textarea[data-page-index="${pageIndex}"]`);
-    if (notesArea) {
-        notesArea.addEventListener('input', (e) => {
-            appState.pages[pageIndex].notes = e.target.value;
-            saveData();
-        });
-    }
+    // Listener para editar contenido
+    pageContent.querySelectorAll('[contenteditable="true"]').forEach(editableEl => {
+        editableEl.addEventListener('input', (e) => {
+            const elementId = parseInt(e.target.getAttribute('data-element-id'));
+            const field = e.target.getAttribute('data-field');
+            const value = e.target.textContent;
 
-    // Botón de cambiar plantilla
-    const templateBtn = document.querySelector(`button[data-page-index="${pageIndex}"]`);
-    if (templateBtn) {
-        templateBtn.addEventListener('click', (e) => {
-            appState.currentTemplatePageIndex = pageIndex;
-            elements.templateModal.classList.add('show');
+            updateElementField(pageIndex, elementId, field, value);
         });
-    }
-
-    // Inputs de fotos
-    const photoInputs = document.querySelectorAll(`input[type="file"][data-page-index="${pageIndex}"]`);
-    photoInputs.forEach(input => {
-        input.addEventListener('change', handlePhotoUpload);
     });
 
-    // Clicks en índice
-    const indexItems = document.querySelectorAll('.index-item');
-    indexItems.forEach(item => {
-        item.addEventListener('click', (e) => {
-            const targetPage = parseInt(e.currentTarget.getAttribute('data-page-index'));
-            goToPage(targetPage);
+    // Listener para mover elementos (drag dentro de la página)
+    pageContent.querySelectorAll('.placed-element').forEach(placedEl => {
+        let isDragging = false;
+        let startX, startY, initialX, initialY;
+
+        placedEl.addEventListener('mousedown', (e) => {
+            // Evitar drag si estamos haciendo click en el botón delete o en un contenteditable
+            if (e.target.classList.contains('delete-btn') ||
+                e.target.hasAttribute('contenteditable') ||
+                e.target.tagName === 'INPUT') {
+                return;
+            }
+
+            isDragging = true;
+            const elementId = parseInt(placedEl.getAttribute('data-element-id'));
+            appState.selectedElement = elementId;
+
+            startX = e.clientX;
+            startY = e.clientY;
+            initialX = placedEl.offsetLeft;
+            initialY = placedEl.offsetTop;
+
+            placedEl.classList.add('selected');
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+
+            const deltaX = e.clientX - startX;
+            const deltaY = e.clientY - startY;
+
+            let newX = initialX + deltaX;
+            let newY = initialY + deltaY;
+
+            // Limitar dentro de la página (establecer límites)
+            const pageRect = pageContent.getBoundingClientRect();
+            const elementRect = placedEl.getBoundingClientRect();
+
+            newX = Math.max(0, Math.min(newX, pageRect.width - elementRect.width));
+            newY = Math.max(0, Math.min(newY, pageRect.height - elementRect.height));
+
+            placedEl.style.left = newX + 'px';
+            placedEl.style.top = newY + 'px';
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isDragging) {
+                isDragging = false;
+
+                const elementId = appState.selectedElement;
+                const newX = parseInt(placedEl.style.left);
+                const newY = parseInt(placedEl.style.top);
+
+                updateElementPosition(pageIndex, elementId, newX, newY);
+
+                placedEl.classList.remove('selected');
+                appState.selectedElement = null;
+            }
         });
     });
 }
 
-function handlePhotoUpload(e) {
-    const file = e.target.files[0];
+function updateElementField(pageIndex, elementId, field, value) {
+    const page = appState.pages[pageIndex];
+    if (!page || !page.elements) return;
+
+    const element = page.elements.find(el => el.id === elementId);
+    if (element) {
+        element[field] = value;
+        saveData();
+    }
+}
+
+function updateElementPosition(pageIndex, elementId, x, y) {
+    const page = appState.pages[pageIndex];
+    if (!page || !page.elements) return;
+
+    const element = page.elements.find(el => el.id === elementId);
+    if (element) {
+        element.x = x;
+        element.y = y;
+        saveData();
+    }
+}
+
+// Función global para eliminar elementos (llamada desde HTML)
+window.deleteElement = function(elementId) {
+    const { currentPageIndex } = appState;
+    const pageIndex = currentPageIndex - 3;
+
+    if (pageIndex < 0 || pageIndex >= appState.pages.length) return;
+
+    const page = appState.pages[pageIndex];
+    if (!page || !page.elements) return;
+
+    page.elements = page.elements.filter(el => el.id !== elementId);
+    saveData();
+    updateDisplay();
+};
+
+// Función global para manejar upload de imágenes
+window.handleImageUpload = function(event, elementId) {
+    const file = event.target.files[0];
     if (!file || !file.type.startsWith('image/')) return;
 
-    const pageIndex = parseInt(e.target.getAttribute('data-page-index'));
-    const slotIndex = parseInt(e.target.getAttribute('data-slot-index'));
-
     const reader = new FileReader();
-    reader.onload = (event) => {
-        if (!appState.pages[pageIndex].photos) {
-            appState.pages[pageIndex].photos = [];
+    reader.onload = (e) => {
+        const { currentPageIndex } = appState;
+        const pageIndex = currentPageIndex - 3;
+
+        if (pageIndex < 0 || pageIndex >= appState.pages.length) return;
+
+        const page = appState.pages[pageIndex];
+        if (!page || !page.elements) return;
+
+        const element = page.elements.find(el => el.id === elementId);
+        if (element) {
+            element.content = e.target.result;
+            saveData();
+            updateDisplay();
         }
-        appState.pages[pageIndex].photos[slotIndex] = event.target.result;
-        saveData();
-        updatePageContent();
     };
     reader.readAsDataURL(file);
-}
-
-// ===== PLANTILLAS =====
-function selectTemplate(template) {
-    const pageIndex = appState.currentTemplatePageIndex;
-    if (pageIndex === null) return;
-
-    appState.pages[pageIndex].template = template;
-
-    // Reiniciar fotos si cambia el template
-    const templates = {
-        'single': 1,
-        'double-horizontal': 2,
-        'double-vertical': 2,
-        'triple': 3,
-        'quad': 4,
-        'collage': 3,
-        'panoramic': 1,
-        'portrait': 1,
-        'triple-horizontal': 3,
-        'grid-5': 5,
-        'grid-6': 6,
-        'polaroid': 3
-    };
-
-    const numSlots = templates[template] || 1;
-    appState.pages[pageIndex].photos = new Array(numSlots).fill('');
-
-    saveData();
-    updatePageContent();
-    elements.templateModal.classList.remove('show');
-}
+};
 
 // ===== AGREGAR PÁGINA =====
 function addNewPage() {
-    appState.pages.push({
-        location: '',
-        template: 'single',
-        photos: [''],
-        notes: ''
-    });
-
+    appState.pages.push({ elements: [] });
     saveData();
 
     // Feedback visual

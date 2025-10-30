@@ -78,17 +78,49 @@
             </button>
         </div>
 
+        <!-- Menú lateral para modo edición -->
+        <div class="sidebar-menu edit-mode-controls" id="sidebarMenu" style="display: none;">
+            <h3 class="sidebar-title">Elementos</h3>
+
+            <div class="element-category">
+                <h4>Contenido</h4>
+                <div class="element-item" draggable="true" data-element-type="title">
+                    <span class="element-icon">📝</span>
+                    <span class="element-name">Título</span>
+                </div>
+                <div class="element-item" draggable="true" data-element-type="text">
+                    <span class="element-icon">📄</span>
+                    <span class="element-name">Texto</span>
+                </div>
+                <div class="element-item" draggable="true" data-element-type="image">
+                    <span class="element-icon">🖼️</span>
+                    <span class="element-name">Imagen</span>
+                </div>
+            </div>
+
+            <div class="element-category">
+                <h4>Decoración</h4>
+                <div class="element-item" draggable="true" data-element-type="icon">
+                    <span class="element-icon">⭐</span>
+                    <span class="element-name">Icono/Emoji</span>
+                </div>
+                <div class="element-item" draggable="true" data-element-type="sticker">
+                    <span class="element-icon">🎨</span>
+                    <span class="element-name">Sticker</span>
+                </div>
+            </div>
+
+            <div class="sidebar-actions">
+                <button class="sidebar-btn" id="addPageBtn">+ Agregar Página</button>
+                <button class="sidebar-btn secondary" id="viewIndexBtn">📑 Ver Índice</button>
+            </div>
+        </div>
+
         <!-- Controles de navegación (Modo Edición) -->
         <div class="controls edit-mode-controls" style="display: none;">
             <button class="nav-btn" id="prevBtn" disabled>← Anterior</button>
             <span class="page-counter" id="pageCounter">Portada</span>
             <button class="nav-btn" id="nextBtn">Siguiente →</button>
-        </div>
-
-        <!-- Botones de acción (Modo Edición) -->
-        <div class="action-buttons edit-mode-controls" style="display: none;">
-            <button class="action-btn" id="addPageBtn">+ Agregar Página</button>
-            <button class="action-btn" id="viewIndexBtn">📑 Ver Índice</button>
         </div>
     </div>
 
@@ -123,122 +155,6 @@
             <div class="customization-section">
                 <label>Imagen de portada:</label>
                 <input type="file" id="coverImageInput" accept="image/*">
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal para plantillas de fotos -->
-    <div class="modal" id="templateModal">
-        <div class="modal-content">
-            <span class="close-modal" id="closeTemplateModal">&times;</span>
-            <h2>Selecciona una Plantilla</h2>
-
-            <div class="template-grid">
-                <div class="template-option" data-template="single">
-                    <div class="template-preview template-single">
-                        <div class="template-box"></div>
-                    </div>
-                    <p>1 Foto Grande</p>
-                </div>
-
-                <div class="template-option" data-template="double-horizontal">
-                    <div class="template-preview template-double-h">
-                        <div class="template-box"></div>
-                        <div class="template-box"></div>
-                    </div>
-                    <p>2 Fotos Horizontal</p>
-                </div>
-
-                <div class="template-option" data-template="double-vertical">
-                    <div class="template-preview template-double-v">
-                        <div class="template-box"></div>
-                        <div class="template-box"></div>
-                    </div>
-                    <p>2 Fotos Vertical</p>
-                </div>
-
-                <div class="template-option" data-template="triple">
-                    <div class="template-preview template-triple">
-                        <div class="template-box"></div>
-                        <div class="template-box"></div>
-                        <div class="template-box"></div>
-                    </div>
-                    <p>3 Fotos</p>
-                </div>
-
-                <div class="template-option" data-template="quad">
-                    <div class="template-preview template-quad">
-                        <div class="template-box"></div>
-                        <div class="template-box"></div>
-                        <div class="template-box"></div>
-                        <div class="template-box"></div>
-                    </div>
-                    <p>4 Fotos</p>
-                </div>
-
-                <div class="template-option" data-template="collage">
-                    <div class="template-preview template-collage">
-                        <div class="template-box"></div>
-                        <div class="template-box"></div>
-                        <div class="template-box"></div>
-                    </div>
-                    <p>Collage</p>
-                </div>
-
-                <div class="template-option" data-template="panoramic">
-                    <div class="template-preview template-panoramic">
-                        <div class="template-box"></div>
-                    </div>
-                    <p>Panorámica</p>
-                </div>
-
-                <div class="template-option" data-template="portrait">
-                    <div class="template-preview template-portrait">
-                        <div class="template-box"></div>
-                    </div>
-                    <p>Retrato Vertical</p>
-                </div>
-
-                <div class="template-option" data-template="triple-horizontal">
-                    <div class="template-preview template-triple-h">
-                        <div class="template-box"></div>
-                        <div class="template-box"></div>
-                        <div class="template-box"></div>
-                    </div>
-                    <p>3 Fotos Horizontal</p>
-                </div>
-
-                <div class="template-option" data-template="grid-5">
-                    <div class="template-preview template-grid-5">
-                        <div class="template-box"></div>
-                        <div class="template-box"></div>
-                        <div class="template-box"></div>
-                        <div class="template-box"></div>
-                        <div class="template-box"></div>
-                    </div>
-                    <p>5 Fotos Grid</p>
-                </div>
-
-                <div class="template-option" data-template="grid-6">
-                    <div class="template-preview template-grid-6">
-                        <div class="template-box"></div>
-                        <div class="template-box"></div>
-                        <div class="template-box"></div>
-                        <div class="template-box"></div>
-                        <div class="template-box"></div>
-                        <div class="template-box"></div>
-                    </div>
-                    <p>6 Fotos Grid</p>
-                </div>
-
-                <div class="template-option" data-template="polaroid">
-                    <div class="template-preview template-polaroid">
-                        <div class="template-box"></div>
-                        <div class="template-box"></div>
-                        <div class="template-box"></div>
-                    </div>
-                    <p>Estilo Polaroid</p>
-                </div>
             </div>
         </div>
     </div>
