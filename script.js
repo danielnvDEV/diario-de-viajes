@@ -1,6 +1,7 @@
 // ===== ESTADO DE LA APLICACIÓN =====
 let appState = {
     currentPageIndex: 0, // 0 = portada, 1 = página vacía, 2 = índice, 3+ = páginas de contenido
+    viewMode: false, // false = edición, true = visualización
     coverData: {
         title: 'Mi Diario de Viajes',
         subtitle: 'Memorias y Aventuras',
@@ -11,8 +12,27 @@ let appState = {
     pages: [], // Páginas de contenido del usuario
     isFlipping: false,
     bookOpened: false,
-    currentPageTemplate: null, // Para el modal de plantillas
-    currentTemplatePageIndex: null
+    currentPageTemplate: null,
+    currentTemplatePageIndex: null,
+    // Estado de rotación 3D
+    rotation: {
+        x: 0,
+        y: 355,
+        isDragging: false,
+        startX: 0,
+        startY: 0,
+        startRotX: 0,
+        startRotY: 355
+    },
+    // Estado de arrastre de página
+    pageDrag: {
+        isDragging: false,
+        startX: 0,
+        startY: 0,
+        currentX: 0,
+        currentY: 0,
+        direction: null // 'next' o 'prev'
+    }
 };
 
 // ===== ELEMENTOS DEL DOM =====
@@ -35,7 +55,20 @@ const elements = {
     closeCoverModal: document.getElementById('closeCoverModal'),
     templateModal: document.getElementById('templateModal'),
     closeTemplateModal: document.getElementById('closeTemplateModal'),
-    coverImageInput: document.getElementById('coverImageInput')
+    coverImageInput: document.getElementById('coverImageInput'),
+    // Nuevos elementos
+    editModeBtn: document.getElementById('editModeBtn'),
+    viewModeBtn: document.getElementById('viewModeBtn'),
+    notebook: document.querySelector('.notebook-3d'),
+    rotationSlider: document.getElementById('rotationSlider'),
+    rotationValue: document.getElementById('rotationValue'),
+    rotateLeftBtn: document.getElementById('rotateLeftBtn'),
+    rotateRightBtn: document.getElementById('rotateRightBtn'),
+    resetRotationBtn: document.getElementById('resetRotationBtn'),
+    cornerBottomRight: document.getElementById('cornerBottomRight'),
+    cornerBottomLeft: document.getElementById('cornerBottomLeft'),
+    editModeControls: document.querySelectorAll('.edit-mode-controls'),
+    viewModeControls: document.querySelectorAll('.view-mode-controls')
 };
 
 // ===== INICIALIZACIÓN =====
@@ -43,6 +76,7 @@ function init() {
     loadData();
     setupEventListeners();
     updateDisplay();
+    applyRotation();
 }
 
 // ===== CARGAR Y GUARDAR DATOS =====
@@ -81,7 +115,11 @@ function saveData() {
 
 // ===== SETUP EVENT LISTENERS =====
 function setupEventListeners() {
-    // Navegación
+    // Cambio de modo
+    elements.editModeBtn.addEventListener('click', () => switchMode(false));
+    elements.viewModeBtn.addEventListener('click', () => switchMode(true));
+
+    // Navegación (modo edición)
     elements.prevBtn.addEventListener('click', goToPreviousPage);
     elements.nextBtn.addEventListener('click', goToNextPage);
 
@@ -167,6 +205,241 @@ function setupEventListeners() {
             selectTemplate(template);
         });
     });
+
+    // === EVENTOS DE MODO VISUALIZACIÓN ===
+
+    // Rotación con slider
+    elements.rotationSlider.addEventListener('input', (e) => {
+        appState.rotation.y = parseInt(e.target.value);
+        elements.rotationValue.textContent = appState.rotation.y + '°';
+        applyRotation();
+    });
+
+    // Botones de rotación
+    elements.rotateLeftBtn.addEventListener('click', () => {
+        appState.rotation.y = (appState.rotation.y + 15) % 360;
+        elements.rotationSlider.value = appState.rotation.y;
+        elements.rotationValue.textContent = appState.rotation.y + '°';
+        applyRotation();
+    });
+
+    elements.rotateRightBtn.addEventListener('click', () => {
+        appState.rotation.y = (appState.rotation.y - 15 + 360) % 360;
+        elements.rotationSlider.value = appState.rotation.y;
+        elements.rotationValue.textContent = appState.rotation.y + '°';
+        applyRotation();
+    });
+
+    elements.resetRotationBtn.addEventListener('click', () => {
+        appState.rotation.y = 355;
+        appState.rotation.x = 0;
+        elements.rotationSlider.value = 355;
+        elements.rotationValue.textContent = '355°';
+        applyRotation();
+    });
+
+    // Rotación con arrastre del mouse
+    elements.notebook.addEventListener('mousedown', startNotebookDrag);
+    document.addEventListener('mousemove', handleNotebookDrag);
+    document.addEventListener('mouseup', stopNotebookDrag);
+
+    // Arrastre de páginas desde esquinas
+    elements.cornerBottomRight.addEventListener('mousedown', (e) => startPageDrag(e, 'next'));
+    elements.cornerBottomLeft.addEventListener('mousedown', (e) => startPageDrag(e, 'prev'));
+    document.addEventListener('mousemove', handlePageDrag);
+    document.addEventListener('mouseup', stopPageDrag);
+}
+
+// ===== CAMBIO DE MODO =====
+function switchMode(viewMode) {
+    appState.viewMode = viewMode;
+
+    if (viewMode) {
+        // Cambiar a modo visualización
+        elements.editModeBtn.classList.remove('active');
+        elements.viewModeBtn.classList.add('active');
+        elements.notebook.classList.add('view-mode');
+
+        // Ocultar controles de edición
+        elements.editModeControls.forEach(el => el.style.display = 'none');
+        // Mostrar controles de visualización
+        elements.viewModeControls.forEach(el => el.style.display = 'flex');
+
+        // Mostrar esquinas si el libro está abierto
+        if (appState.bookOpened) {
+            updateCornerVisibility();
+        }
+    } else {
+        // Cambiar a modo edición
+        elements.viewModeBtn.classList.remove('active');
+        elements.editModeBtn.classList.add('active');
+        elements.notebook.classList.remove('view-mode');
+
+        // Mostrar controles de edición
+        elements.editModeControls.forEach(el => el.style.display = 'flex');
+        // Ocultar controles de visualización
+        elements.viewModeControls.forEach(el => el.style.display = 'none');
+
+        // Ocultar esquinas
+        elements.cornerBottomRight.style.display = 'none';
+        elements.cornerBottomLeft.style.display = 'none';
+    }
+}
+
+// ===== ROTACIÓN 3D DEL CUADERNO =====
+function applyRotation() {
+    const { x, y } = appState.rotation;
+    elements.notebook.style.setProperty('--rotation-x', `${x}deg`);
+    elements.notebook.style.setProperty('--rotation-y', `${y}deg`);
+}
+
+function startNotebookDrag(e) {
+    if (!appState.viewMode || appState.pageDrag.isDragging) return;
+
+    appState.rotation.isDragging = true;
+    appState.rotation.startX = e.clientX;
+    appState.rotation.startY = e.clientY;
+    appState.rotation.startRotX = appState.rotation.x;
+    appState.rotation.startRotY = appState.rotation.y;
+}
+
+function handleNotebookDrag(e) {
+    if (!appState.rotation.isDragging) return;
+
+    const deltaX = e.clientX - appState.rotation.startX;
+    const deltaY = e.clientY - appState.rotation.startY;
+
+    appState.rotation.y = (appState.rotation.startRotY - deltaX * 0.5 + 360) % 360;
+    appState.rotation.x = Math.max(-30, Math.min(30, appState.rotation.startRotX + deltaY * 0.2));
+
+    elements.rotationSlider.value = appState.rotation.y;
+    elements.rotationValue.textContent = Math.round(appState.rotation.y) + '°';
+
+    applyRotation();
+}
+
+function stopNotebookDrag() {
+    appState.rotation.isDragging = false;
+}
+
+// ===== ARRASTRE DE PÁGINAS DESDE ESQUINAS =====
+function startPageDrag(e, direction) {
+    if (!appState.viewMode || appState.isFlipping) return;
+
+    e.preventDefault();
+    appState.pageDrag.isDragging = true;
+    appState.pageDrag.direction = direction;
+    appState.pageDrag.startX = e.clientX;
+    appState.pageDrag.startY = e.clientY;
+    appState.pageDrag.currentX = e.clientX;
+    appState.pageDrag.currentY = e.clientY;
+
+    elements.rightPage.classList.add('dragging');
+}
+
+function handlePageDrag(e) {
+    if (!appState.pageDrag.isDragging) return;
+
+    e.preventDefault();
+    appState.pageDrag.currentX = e.clientX;
+    appState.pageDrag.currentY = e.clientY;
+
+    const deltaX = appState.pageDrag.currentX - appState.pageDrag.startX;
+    const deltaY = appState.pageDrag.currentY - appState.pageDrag.startY;
+
+    // Calcular el ángulo de rotación basado en el arrastre
+    let angle = 0;
+    let foldShadow = 0;
+
+    if (appState.pageDrag.direction === 'next') {
+        // Arrastar hacia la izquierda
+        angle = Math.max(-180, Math.min(0, deltaX * 0.5));
+        foldShadow = Math.abs(angle) / 180;
+    } else {
+        // Arrastar hacia la derecha (para volver)
+        angle = Math.max(0, Math.min(180, -deltaX * 0.5));
+        foldShadow = Math.abs(angle) / 180;
+    }
+
+    // Aplicar transformación de doblez
+    elements.rightPage.style.transform = `rotateY(${angle}deg)`;
+    elements.rightPage.style.setProperty('--fold-shadow', foldShadow);
+}
+
+function stopPageDrag() {
+    if (!appState.pageDrag.isDragging) return;
+
+    const deltaX = appState.pageDrag.currentX - appState.pageDrag.startX;
+    const threshold = 150; // Distancia mínima para cambiar de página
+
+    let shouldChangePage = false;
+
+    if (appState.pageDrag.direction === 'next' && deltaX < -threshold) {
+        shouldChangePage = true;
+        // Completar animación hacia adelante
+        elements.rightPage.style.transition = 'transform 0.6s ease-out';
+        elements.rightPage.style.transform = 'rotateY(-180deg)';
+
+        setTimeout(() => {
+            goToNextPage();
+            elements.rightPage.classList.remove('dragging');
+            elements.rightPage.style.transition = '';
+            elements.rightPage.style.transform = '';
+            elements.rightPage.style.setProperty('--fold-shadow', 0);
+        }, 600);
+    } else if (appState.pageDrag.direction === 'prev' && deltaX > threshold) {
+        shouldChangePage = true;
+        // Completar animación hacia atrás
+        elements.rightPage.style.transition = 'transform 0.6s ease-out';
+        elements.rightPage.style.transform = 'rotateY(180deg)';
+
+        setTimeout(() => {
+            goToPreviousPage();
+            elements.rightPage.classList.remove('dragging');
+            elements.rightPage.style.transition = '';
+            elements.rightPage.style.transform = '';
+            elements.rightPage.style.setProperty('--fold-shadow', 0);
+        }, 600);
+    } else {
+        // Volver a la posición original
+        elements.rightPage.style.transition = 'transform 0.4s ease-out';
+        elements.rightPage.style.transform = 'rotateY(0deg)';
+        elements.rightPage.style.setProperty('--fold-shadow', 0);
+
+        setTimeout(() => {
+            elements.rightPage.classList.remove('dragging');
+            elements.rightPage.style.transition = '';
+            elements.rightPage.style.transform = '';
+        }, 400);
+    }
+
+    appState.pageDrag.isDragging = false;
+    appState.pageDrag.direction = null;
+}
+
+// Actualizar visibilidad de esquinas
+function updateCornerVisibility() {
+    if (!appState.viewMode || !appState.bookOpened) {
+        elements.cornerBottomRight.style.display = 'none';
+        elements.cornerBottomLeft.style.display = 'none';
+        return;
+    }
+
+    const totalPages = getTotalPages();
+
+    // Mostrar esquina derecha si hay página siguiente
+    if (appState.currentPageIndex < totalPages - 1) {
+        elements.cornerBottomRight.style.display = 'block';
+    } else {
+        elements.cornerBottomRight.style.display = 'none';
+    }
+
+    // Mostrar esquina izquierda si hay página anterior
+    if (appState.currentPageIndex > 1) {
+        elements.cornerBottomLeft.style.display = 'block';
+    } else {
+        elements.cornerBottomLeft.style.display = 'none';
+    }
 }
 
 // ===== PERSONALIZACIÓN DE PORTADA =====
@@ -181,11 +454,6 @@ function applyCoverCustomization() {
     let darkerColor = adjustBrightness(baseColor, -20);
 
     elements.frontCover.style.background = `linear-gradient(135deg, ${baseColor} 0%, ${darkerColor} 100%)`;
-
-    // Aplicar textura
-    if (texture === 'leather') {
-        elements.frontCover.querySelector('::before');
-    }
 
     // Aplicar imagen
     if (image) {
@@ -224,6 +492,7 @@ function goToPreviousPage() {
         setTimeout(() => {
             appState.isFlipping = false;
             updateDisplay();
+            updateCornerVisibility();
         }, 600);
     } else {
         // Navegación normal
@@ -232,6 +501,7 @@ function goToPreviousPage() {
         setTimeout(() => {
             appState.currentPageIndex--;
             updateDisplay();
+            updateCornerVisibility();
             appState.isFlipping = false;
         }, 800);
     }
@@ -252,6 +522,7 @@ function goToNextPage() {
             elements.pagesContainer.classList.add('visible');
             appState.currentPageIndex = 1;
             updateDisplay();
+            updateCornerVisibility();
             appState.isFlipping = false;
         }, 600);
     } else {
@@ -262,6 +533,7 @@ function goToNextPage() {
             appState.currentPageIndex++;
             elements.rightPage.classList.remove('flipping');
             updateDisplay();
+            updateCornerVisibility();
             appState.isFlipping = false;
         }, 800);
     }
@@ -283,6 +555,7 @@ function goToPage(pageIndex) {
     }
 
     updateDisplay();
+    updateCornerVisibility();
 }
 
 function getTotalPages() {

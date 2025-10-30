@@ -56,17 +56,48 @@
             </div>
         </div>
 
-        <!-- Controles de navegación -->
-        <div class="controls">
+        <!-- Selector de modo -->
+        <div class="mode-selector">
+            <button class="mode-btn active" id="editModeBtn">✏️ Modo Edición</button>
+            <button class="mode-btn" id="viewModeBtn">👁️ Modo Visualización</button>
+        </div>
+
+        <!-- Controles de navegación (Modo Edición) -->
+        <div class="controls edit-mode-controls">
             <button class="nav-btn" id="prevBtn" disabled>← Anterior</button>
             <span class="page-counter" id="pageCounter">Portada</span>
             <button class="nav-btn" id="nextBtn">Siguiente →</button>
         </div>
 
-        <!-- Botones de acción -->
-        <div class="action-buttons">
+        <!-- Controles de rotación 3D (Modo Visualización) -->
+        <div class="rotation-controls view-mode-controls" style="display: none;">
+            <div class="rotation-info">
+                <span>Arrastra las esquinas de las páginas para voltearlas</span>
+            </div>
+            <div class="rotation-buttons">
+                <button class="rotation-btn" id="rotateLeftBtn">↺ Rotar Izquierda</button>
+                <button class="rotation-btn" id="resetRotationBtn">⊙ Centrar</button>
+                <button class="rotation-btn" id="rotateRightBtn">Rotar Derecha ↻</button>
+            </div>
+            <div class="rotation-slider">
+                <label>Rotación 360°:</label>
+                <input type="range" id="rotationSlider" min="0" max="360" value="355" step="1">
+                <span id="rotationValue">355°</span>
+            </div>
+        </div>
+
+        <!-- Botones de acción (Modo Edición) -->
+        <div class="action-buttons edit-mode-controls">
             <button class="action-btn" id="addPageBtn">+ Agregar Página</button>
             <button class="action-btn" id="viewIndexBtn">📑 Ver Índice</button>
+        </div>
+
+        <!-- Esquinas interactivas para arrastrar páginas (Modo Visualización) -->
+        <div class="page-corner bottom-right" id="cornerBottomRight" style="display: none;">
+            <div class="corner-hint">▶</div>
+        </div>
+        <div class="page-corner bottom-left" id="cornerBottomLeft" style="display: none;">
+            <div class="corner-hint">◀</div>
         </div>
     </div>
 

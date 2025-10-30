@@ -48,6 +48,17 @@ body {
     transform: perspective(2000px) rotateY(-2deg);
 }
 
+/* Modo visualización - Rotación mejorada */
+.notebook-3d.view-mode {
+    transform: perspective(2500px) rotateY(var(--rotation-y, -5deg)) rotateX(var(--rotation-x, 0deg));
+    transition: transform 0.3s ease-out;
+    cursor: grab;
+}
+
+.notebook-3d.view-mode:active {
+    cursor: grabbing;
+}
+
 /* Portada frontal */
 .book-cover {
     position: absolute;
@@ -845,6 +856,246 @@ body {
     color: #4e342e;
     font-size: 0.95em;
     font-weight: bold;
+}
+
+/* ====== SELECTOR DE MODO ====== */
+.mode-selector {
+    display: flex;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 8px;
+    border-radius: 50px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    margin-bottom: 20px;
+}
+
+.mode-btn {
+    padding: 12px 28px;
+    font-size: 1.1em;
+    font-family: 'Georgia', serif;
+    background: rgba(255, 255, 255, 0.1);
+    color: #f0e6d2;
+    border: 2px solid transparent;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.mode-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.mode-btn.active {
+    background: linear-gradient(135deg, #8d6e63, #6d4c41);
+    color: #fff;
+    border-color: #8d6e63;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* ====== CONTROLES DE ROTACIÓN 3D ====== */
+.rotation-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 20px;
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    max-width: 600px;
+    width: 100%;
+}
+
+.rotation-info {
+    text-align: center;
+    color: #f0e6d2;
+    font-size: 1.1em;
+    font-style: italic;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+}
+
+.rotation-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.rotation-btn {
+    padding: 10px 20px;
+    font-size: 1em;
+    font-family: 'Georgia', serif;
+    background: linear-gradient(135deg, #6d4c41, #4e342e);
+    color: #fff;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+}
+
+.rotation-btn:hover {
+    background: linear-gradient(135deg, #8d6e63, #6d4c41);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+}
+
+.rotation-slider {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+}
+
+.rotation-slider label {
+    color: #f0e6d2;
+    font-size: 1em;
+    min-width: 100px;
+}
+
+.rotation-slider input[type="range"] {
+    flex: 1;
+    height: 8px;
+    background: linear-gradient(to right, #6d4c41, #8d6e63, #6d4c41);
+    border-radius: 5px;
+    outline: none;
+    cursor: pointer;
+}
+
+.rotation-slider input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: #f0e6d2;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.rotation-slider input[type="range"]::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background: #f0e6d2;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    border: none;
+}
+
+.rotation-slider span {
+    color: #f0e6d2;
+    font-size: 1.1em;
+    font-weight: bold;
+    min-width: 50px;
+    text-align: right;
+}
+
+/* ====== ESQUINAS INTERACTIVAS ====== */
+.page-corner {
+    position: fixed;
+    width: 150px;
+    height: 150px;
+    cursor: pointer;
+    z-index: 100;
+    transition: opacity 0.3s;
+}
+
+.page-corner.bottom-right {
+    bottom: 200px;
+    right: calc(50% - 450px + 20px);
+}
+
+.page-corner.bottom-left {
+    bottom: 200px;
+    left: calc(50% - 450px + 20px);
+}
+
+.corner-hint {
+    position: absolute;
+    bottom: 20px;
+    font-size: 2em;
+    color: rgba(240, 230, 210, 0.4);
+    animation: pulse 2s ease-in-out infinite;
+    text-shadow: 0 0 10px rgba(240, 230, 210, 0.5);
+}
+
+.page-corner.bottom-right .corner-hint {
+    right: 20px;
+}
+
+.page-corner.bottom-left .corner-hint {
+    left: 20px;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 0.4;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.8;
+        transform: scale(1.2);
+    }
+}
+
+.page-corner:hover .corner-hint {
+    opacity: 1;
+    color: rgba(240, 230, 210, 0.9);
+}
+
+/* ====== EFECTO DE DOBLEZ DE PÁGINA ====== */
+.right-page.dragging {
+    transition: none !important;
+}
+
+.page-fold-effect {
+    position: absolute;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+/* Efecto de sombra en el doblez */
+.right-page::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        to left,
+        rgba(0, 0, 0, 0) 0%,
+        rgba(0, 0, 0, 0.1) 50%,
+        rgba(0, 0, 0, 0) 100%
+    );
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+}
+
+.right-page.dragging::after {
+    opacity: var(--fold-shadow, 0);
+}
+
+/* Modo visualización - Deshabilitar edición */
+.view-mode .location-input,
+.view-mode .notes-area,
+.view-mode .cover-title,
+.view-mode .cover-subtitle {
+    pointer-events: none;
+    user-select: none;
+}
+
+.view-mode .select-template-btn,
+.view-mode .customize-cover-btn,
+.view-mode .photo-slot input[type="file"],
+.view-mode .photo-slot label {
+    display: none;
 }
 
 /* ====== RESPONSIVE ====== */
