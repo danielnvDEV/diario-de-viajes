@@ -1,7 +1,7 @@
 // ===== ESTADO DE LA APLICACIÓN =====
 let appState = {
     currentPageIndex: 0, // 0 = portada, 1 = página vacía, 2 = índice, 3+ = páginas de contenido
-    viewMode: false, // false = edición, true = visualización
+    viewMode: true, // true = visualización por defecto, false = edición
     coverData: {
         title: 'Mi Diario de Viajes',
         subtitle: 'Memorias y Aventuras',
@@ -14,16 +14,6 @@ let appState = {
     bookOpened: false,
     currentPageTemplate: null,
     currentTemplatePageIndex: null,
-    // Estado de rotación 3D
-    rotation: {
-        x: 0,
-        y: 355,
-        isDragging: false,
-        startX: 0,
-        startY: 0,
-        startRotX: 0,
-        startRotY: 355
-    },
     // Estado de arrastre de página
     pageDrag: {
         isDragging: false,
@@ -31,7 +21,7 @@ let appState = {
         startY: 0,
         currentX: 0,
         currentY: 0,
-        direction: null // 'next' o 'prev'
+        progress: 0 // 0 a 1 para animación suave
     }
 };
 
@@ -56,27 +46,21 @@ const elements = {
     templateModal: document.getElementById('templateModal'),
     closeTemplateModal: document.getElementById('closeTemplateModal'),
     coverImageInput: document.getElementById('coverImageInput'),
-    // Nuevos elementos
-    editModeBtn: document.getElementById('editModeBtn'),
-    viewModeBtn: document.getElementById('viewModeBtn'),
+    // Elementos actualizados
+    editModeToggle: document.getElementById('editModeToggle'),
     notebook: document.querySelector('.notebook-3d'),
-    rotationSlider: document.getElementById('rotationSlider'),
-    rotationValue: document.getElementById('rotationValue'),
-    rotateLeftBtn: document.getElementById('rotateLeftBtn'),
-    rotateRightBtn: document.getElementById('rotateRightBtn'),
-    resetRotationBtn: document.getElementById('resetRotationBtn'),
-    cornerBottomRight: document.getElementById('cornerBottomRight'),
-    cornerBottomLeft: document.getElementById('cornerBottomLeft'),
-    editModeControls: document.querySelectorAll('.edit-mode-controls'),
-    viewModeControls: document.querySelectorAll('.view-mode-controls')
+    cornerAreaRight: document.getElementById('cornerAreaRight'),
+    cornerAreaLeft: document.getElementById('cornerAreaLeft'),
+    viewModeHint: document.getElementById('viewModeHint'),
+    editModeControls: document.querySelectorAll('.edit-mode-controls')
 };
 
 // ===== INICIALIZACIÓN =====
 function init() {
     loadData();
     setupEventListeners();
+    switchMode(true); // Iniciar en modo visualización
     updateDisplay();
-    applyRotation();
 }
 
 // ===== CARGAR Y GUARDAR DATOS =====
@@ -115,9 +99,10 @@ function saveData() {
 
 // ===== SETUP EVENT LISTENERS =====
 function setupEventListeners() {
-    // Cambio de modo
-    elements.editModeBtn.addEventListener('click', () => switchMode(false));
-    elements.viewModeBtn.addEventListener('click', () => switchMode(true));
+    // Cambio de modo con icono de brocha
+    elements.editModeToggle.addEventListener('click', () => {
+        switchMode(!appState.viewMode);
+    });
 
     // Navegación (modo edición)
     elements.prevBtn.addEventListener('click', goToPreviousPage);
@@ -206,48 +191,22 @@ function setupEventListeners() {
         });
     });
 
-    // === EVENTOS DE MODO VISUALIZACIÓN ===
-
-    // Rotación con slider
-    elements.rotationSlider.addEventListener('input', (e) => {
-        appState.rotation.y = parseInt(e.target.value);
-        elements.rotationValue.textContent = appState.rotation.y + '°';
-        applyRotation();
-    });
-
-    // Botones de rotación
-    elements.rotateLeftBtn.addEventListener('click', () => {
-        appState.rotation.y = (appState.rotation.y + 15) % 360;
-        elements.rotationSlider.value = appState.rotation.y;
-        elements.rotationValue.textContent = appState.rotation.y + '°';
-        applyRotation();
-    });
-
-    elements.rotateRightBtn.addEventListener('click', () => {
-        appState.rotation.y = (appState.rotation.y - 15 + 360) % 360;
-        elements.rotationSlider.value = appState.rotation.y;
-        elements.rotationValue.textContent = appState.rotation.y + '°';
-        applyRotation();
-    });
-
-    elements.resetRotationBtn.addEventListener('click', () => {
-        appState.rotation.y = 355;
-        appState.rotation.x = 0;
-        elements.rotationSlider.value = 355;
-        elements.rotationValue.textContent = '355°';
-        applyRotation();
-    });
-
-    // Rotación con arrastre del mouse
-    elements.notebook.addEventListener('mousedown', startNotebookDrag);
-    document.addEventListener('mousemove', handleNotebookDrag);
-    document.addEventListener('mouseup', stopNotebookDrag);
-
-    // Arrastre de páginas desde esquinas
-    elements.cornerBottomRight.addEventListener('mousedown', (e) => startPageDrag(e, 'next'));
-    elements.cornerBottomLeft.addEventListener('mousedown', (e) => startPageDrag(e, 'prev'));
+    // === EVENTOS DE ARRASTRE DE PÁGINAS ===
+    elements.cornerAreaRight.addEventListener('mousedown', (e) => startPageDrag(e, 'next'));
+    elements.cornerAreaLeft.addEventListener('mousedown', (e) => startPageDrag(e, 'prev'));
     document.addEventListener('mousemove', handlePageDrag);
     document.addEventListener('mouseup', stopPageDrag);
+
+    // Touch events para móviles
+    elements.cornerAreaRight.addEventListener('touchstart', (e) => startPageDrag(e.touches[0], 'next'));
+    elements.cornerAreaLeft.addEventListener('touchstart', (e) => startPageDrag(e.touches[0], 'prev'));
+    document.addEventListener('touchmove', (e) => {
+        if (appState.pageDrag.isDragging) {
+            e.preventDefault();
+            handlePageDrag(e.touches[0]);
+        }
+    }, { passive: false });
+    document.addEventListener('touchend', stopPageDrag);
 }
 
 // ===== CAMBIO DE MODO =====
@@ -256,14 +215,16 @@ function switchMode(viewMode) {
 
     if (viewMode) {
         // Cambiar a modo visualización
-        elements.editModeBtn.classList.remove('active');
-        elements.viewModeBtn.classList.add('active');
+        elements.editModeToggle.classList.remove('active');
         elements.notebook.classList.add('view-mode');
 
         // Ocultar controles de edición
         elements.editModeControls.forEach(el => el.style.display = 'none');
-        // Mostrar controles de visualización
-        elements.viewModeControls.forEach(el => el.style.display = 'flex');
+
+        // Mostrar mensaje de ayuda
+        if (elements.viewModeHint) {
+            elements.viewModeHint.style.display = 'block';
+        }
 
         // Mostrar esquinas si el libro está abierto
         if (appState.bookOpened) {
@@ -271,149 +232,131 @@ function switchMode(viewMode) {
         }
     } else {
         // Cambiar a modo edición
-        elements.viewModeBtn.classList.remove('active');
-        elements.editModeBtn.classList.add('active');
+        elements.editModeToggle.classList.add('active');
         elements.notebook.classList.remove('view-mode');
 
         // Mostrar controles de edición
         elements.editModeControls.forEach(el => el.style.display = 'flex');
-        // Ocultar controles de visualización
-        elements.viewModeControls.forEach(el => el.style.display = 'none');
+
+        // Ocultar mensaje de ayuda
+        if (elements.viewModeHint) {
+            elements.viewModeHint.style.display = 'none';
+        }
 
         // Ocultar esquinas
-        elements.cornerBottomRight.style.display = 'none';
-        elements.cornerBottomLeft.style.display = 'none';
+        elements.cornerAreaRight.classList.remove('visible');
+        elements.cornerAreaLeft.classList.remove('visible');
     }
 }
 
-// ===== ROTACIÓN 3D DEL CUADERNO =====
-function applyRotation() {
-    const { x, y } = appState.rotation;
-    elements.notebook.style.setProperty('--rotation-x', `${x}deg`);
-    elements.notebook.style.setProperty('--rotation-y', `${y}deg`);
-}
 
-function startNotebookDrag(e) {
-    if (!appState.viewMode || appState.pageDrag.isDragging) return;
-
-    appState.rotation.isDragging = true;
-    appState.rotation.startX = e.clientX;
-    appState.rotation.startY = e.clientY;
-    appState.rotation.startRotX = appState.rotation.x;
-    appState.rotation.startRotY = appState.rotation.y;
-}
-
-function handleNotebookDrag(e) {
-    if (!appState.rotation.isDragging) return;
-
-    const deltaX = e.clientX - appState.rotation.startX;
-    const deltaY = e.clientY - appState.rotation.startY;
-
-    appState.rotation.y = (appState.rotation.startRotY - deltaX * 0.5 + 360) % 360;
-    appState.rotation.x = Math.max(-30, Math.min(30, appState.rotation.startRotX + deltaY * 0.2));
-
-    elements.rotationSlider.value = appState.rotation.y;
-    elements.rotationValue.textContent = Math.round(appState.rotation.y) + '°';
-
-    applyRotation();
-}
-
-function stopNotebookDrag() {
-    appState.rotation.isDragging = false;
-}
-
-// ===== ARRASTRE DE PÁGINAS DESDE ESQUINAS =====
+// ===== ARRASTRE DE PÁGINAS MEJORADO =====
 function startPageDrag(e, direction) {
     if (!appState.viewMode || appState.isFlipping) return;
 
     e.preventDefault();
+
+    // Determinar si se puede avanzar o retroceder
+    const totalPages = getTotalPages();
+    if (direction === 'next' && appState.currentPageIndex >= totalPages - 1) return;
+    if (direction === 'prev' && appState.currentPageIndex <= 1) return;
+
     appState.pageDrag.isDragging = true;
+    appState.pageDrag.startX = e.clientX || e.pageX;
+    appState.pageDrag.startY = e.clientY || e.pageY;
+    appState.pageDrag.currentX = appState.pageDrag.startX;
+    appState.pageDrag.currentY = appState.pageDrag.startY;
+    appState.pageDrag.progress = 0;
+
+    // Guardar dirección según la esquina
     appState.pageDrag.direction = direction;
-    appState.pageDrag.startX = e.clientX;
-    appState.pageDrag.startY = e.clientY;
-    appState.pageDrag.currentX = e.clientX;
-    appState.pageDrag.currentY = e.clientY;
 
     elements.rightPage.classList.add('dragging');
+
+    // Ocultar esquinas durante el arrastre
+    elements.cornerAreaRight.style.opacity = '0';
+    elements.cornerAreaLeft.style.opacity = '0';
 }
 
 function handlePageDrag(e) {
     if (!appState.pageDrag.isDragging) return;
 
     e.preventDefault();
-    appState.pageDrag.currentX = e.clientX;
-    appState.pageDrag.currentY = e.clientY;
+    appState.pageDrag.currentX = e.clientX || e.pageX;
+    appState.pageDrag.currentY = e.clientY || e.pageY;
 
     const deltaX = appState.pageDrag.currentX - appState.pageDrag.startX;
-    const deltaY = appState.pageDrag.currentY - appState.pageDrag.startY;
+    const maxDrag = 300; // Distancia máxima de arrastre
 
-    // Calcular el ángulo de rotación basado en el arrastre
-    let angle = 0;
-    let foldShadow = 0;
+    // Calcular progreso (0 a 1)
+    let progress = 0;
 
     if (appState.pageDrag.direction === 'next') {
-        // Arrastar hacia la izquierda
-        angle = Math.max(-180, Math.min(0, deltaX * 0.5));
-        foldShadow = Math.abs(angle) / 180;
+        // Arrastar hacia la izquierda (negativo)
+        progress = Math.max(0, Math.min(1, -deltaX / maxDrag));
     } else {
-        // Arrastar hacia la derecha (para volver)
-        angle = Math.max(0, Math.min(180, -deltaX * 0.5));
-        foldShadow = Math.abs(angle) / 180;
+        // Arrastar hacia la derecha (positivo)
+        progress = Math.max(0, Math.min(1, deltaX / maxDrag));
     }
 
-    // Aplicar transformación de doblez
+    appState.pageDrag.progress = progress;
+
+    // Ángulo de rotación suave
+    const angle = appState.pageDrag.direction === 'next'
+        ? -180 * progress
+        : 180 * (1 - progress);
+
+    // Aplicar transformación
     elements.rightPage.style.transform = `rotateY(${angle}deg)`;
-    elements.rightPage.style.setProperty('--fold-shadow', foldShadow);
+    elements.rightPage.style.setProperty('--fold-shadow', progress);
 }
 
 function stopPageDrag() {
     if (!appState.pageDrag.isDragging) return;
 
-    const deltaX = appState.pageDrag.currentX - appState.pageDrag.startX;
-    const threshold = 150; // Distancia mínima para cambiar de página
+    const threshold = 0.5; // 50% de progreso mínimo
 
-    let shouldChangePage = false;
+    // Restaurar visibilidad de esquinas
+    elements.cornerAreaRight.style.opacity = '';
+    elements.cornerAreaLeft.style.opacity = '';
 
-    if (appState.pageDrag.direction === 'next' && deltaX < -threshold) {
-        shouldChangePage = true;
-        // Completar animación hacia adelante
-        elements.rightPage.style.transition = 'transform 0.6s ease-out';
-        elements.rightPage.style.transform = 'rotateY(-180deg)';
+    if (appState.pageDrag.progress >= threshold) {
+        // Completar el volteo
+        elements.rightPage.style.transition = 'transform 0.5s cubic-bezier(0.645, 0.045, 0.355, 1)';
 
-        setTimeout(() => {
-            goToNextPage();
-            elements.rightPage.classList.remove('dragging');
-            elements.rightPage.style.transition = '';
-            elements.rightPage.style.transform = '';
-            elements.rightPage.style.setProperty('--fold-shadow', 0);
-        }, 600);
-    } else if (appState.pageDrag.direction === 'prev' && deltaX > threshold) {
-        shouldChangePage = true;
-        // Completar animación hacia atrás
-        elements.rightPage.style.transition = 'transform 0.6s ease-out';
-        elements.rightPage.style.transform = 'rotateY(180deg)';
-
-        setTimeout(() => {
-            goToPreviousPage();
-            elements.rightPage.classList.remove('dragging');
-            elements.rightPage.style.transition = '';
-            elements.rightPage.style.transform = '';
-            elements.rightPage.style.setProperty('--fold-shadow', 0);
-        }, 600);
+        if (appState.pageDrag.direction === 'next') {
+            elements.rightPage.style.transform = 'rotateY(-180deg)';
+            setTimeout(() => {
+                goToNextPage();
+                resetPageDragState();
+            }, 500);
+        } else {
+            elements.rightPage.style.transform = 'rotateY(180deg)';
+            setTimeout(() => {
+                goToPreviousPage();
+                resetPageDragState();
+            }, 500);
+        }
     } else {
-        // Volver a la posición original
-        elements.rightPage.style.transition = 'transform 0.4s ease-out';
+        // Volver a la posición original (cancelar)
+        elements.rightPage.style.transition = 'transform 0.3s cubic-bezier(0.645, 0.045, 0.355, 1)';
         elements.rightPage.style.transform = 'rotateY(0deg)';
         elements.rightPage.style.setProperty('--fold-shadow', 0);
 
         setTimeout(() => {
-            elements.rightPage.classList.remove('dragging');
-            elements.rightPage.style.transition = '';
-            elements.rightPage.style.transform = '';
-        }, 400);
+            resetPageDragState();
+        }, 300);
     }
 
     appState.pageDrag.isDragging = false;
+}
+
+function resetPageDragState() {
+    elements.rightPage.classList.remove('dragging');
+    elements.rightPage.style.transition = '';
+    elements.rightPage.style.transform = '';
+    elements.rightPage.style.setProperty('--fold-shadow', 0);
+    appState.pageDrag.progress = 0;
     appState.pageDrag.direction = null;
 }
 

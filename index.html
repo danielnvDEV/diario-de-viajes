@@ -56,48 +56,44 @@
             </div>
         </div>
 
-        <!-- Selector de modo -->
-        <div class="mode-selector">
-            <button class="mode-btn active" id="editModeBtn">✏️ Modo Edición</button>
-            <button class="mode-btn" id="viewModeBtn">👁️ Modo Visualización</button>
+        <!-- Icono de brocha para modo edición (flotante) -->
+        <div class="edit-mode-toggle" id="editModeToggle" title="Activar modo edición">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M20.71 4.63l-1.34-1.34c-.39-.39-1.02-.39-1.41 0L9 12.25 11.75 15l8.96-8.96c.39-.39.39-1.02 0-1.41z"/>
+                <path d="M7 14c-1.66 0-3 1.34-3 3 0 1.31-1.16 2-2 2 .92 1.22 2.49 2 4 2 2.21 0 4-1.79 4-4l-3-3z"/>
+            </svg>
         </div>
 
         <!-- Controles de navegación (Modo Edición) -->
-        <div class="controls edit-mode-controls">
+        <div class="controls edit-mode-controls" style="display: none;">
             <button class="nav-btn" id="prevBtn" disabled>← Anterior</button>
             <span class="page-counter" id="pageCounter">Portada</span>
             <button class="nav-btn" id="nextBtn">Siguiente →</button>
         </div>
 
-        <!-- Controles de rotación 3D (Modo Visualización) -->
-        <div class="rotation-controls view-mode-controls" style="display: none;">
-            <div class="rotation-info">
-                <span>Arrastra las esquinas de las páginas para voltearlas</span>
-            </div>
-            <div class="rotation-buttons">
-                <button class="rotation-btn" id="rotateLeftBtn">↺ Rotar Izquierda</button>
-                <button class="rotation-btn" id="resetRotationBtn">⊙ Centrar</button>
-                <button class="rotation-btn" id="rotateRightBtn">Rotar Derecha ↻</button>
-            </div>
-            <div class="rotation-slider">
-                <label>Rotación 360°:</label>
-                <input type="range" id="rotationSlider" min="0" max="360" value="355" step="1">
-                <span id="rotationValue">355°</span>
-            </div>
+        <!-- Mensaje de ayuda (Modo Visualización) -->
+        <div class="view-mode-hint" id="viewModeHint">
+            <p>💡 Arrastra las esquinas de las páginas para pasar hojas</p>
         </div>
 
         <!-- Botones de acción (Modo Edición) -->
-        <div class="action-buttons edit-mode-controls">
+        <div class="action-buttons edit-mode-controls" style="display: none;">
             <button class="action-btn" id="addPageBtn">+ Agregar Página</button>
             <button class="action-btn" id="viewIndexBtn">📑 Ver Índice</button>
         </div>
 
-        <!-- Esquinas interactivas para arrastrar páginas (Modo Visualización) -->
-        <div class="page-corner bottom-right" id="cornerBottomRight" style="display: none;">
-            <div class="corner-hint">▶</div>
+        <!-- Esquinas interactivas mejoradas para arrastrar páginas -->
+        <div class="page-corner-area right" id="cornerAreaRight">
+            <div class="corner-visual">
+                <div class="corner-fold"></div>
+                <div class="corner-icon">▶</div>
+            </div>
         </div>
-        <div class="page-corner bottom-left" id="cornerBottomLeft" style="display: none;">
-            <div class="corner-hint">◀</div>
+        <div class="page-corner-area left" id="cornerAreaLeft">
+            <div class="corner-visual">
+                <div class="corner-fold"></div>
+                <div class="corner-icon">◀</div>
+            </div>
         </div>
     </div>
 
@@ -192,6 +188,61 @@
                         <div class="template-box"></div>
                     </div>
                     <p>Collage</p>
+                </div>
+
+                <div class="template-option" data-template="panoramic">
+                    <div class="template-preview template-panoramic">
+                        <div class="template-box"></div>
+                    </div>
+                    <p>Panorámica</p>
+                </div>
+
+                <div class="template-option" data-template="portrait">
+                    <div class="template-preview template-portrait">
+                        <div class="template-box"></div>
+                    </div>
+                    <p>Retrato Vertical</p>
+                </div>
+
+                <div class="template-option" data-template="triple-horizontal">
+                    <div class="template-preview template-triple-h">
+                        <div class="template-box"></div>
+                        <div class="template-box"></div>
+                        <div class="template-box"></div>
+                    </div>
+                    <p>3 Fotos Horizontal</p>
+                </div>
+
+                <div class="template-option" data-template="grid-5">
+                    <div class="template-preview template-grid-5">
+                        <div class="template-box"></div>
+                        <div class="template-box"></div>
+                        <div class="template-box"></div>
+                        <div class="template-box"></div>
+                        <div class="template-box"></div>
+                    </div>
+                    <p>5 Fotos Grid</p>
+                </div>
+
+                <div class="template-option" data-template="grid-6">
+                    <div class="template-preview template-grid-6">
+                        <div class="template-box"></div>
+                        <div class="template-box"></div>
+                        <div class="template-box"></div>
+                        <div class="template-box"></div>
+                        <div class="template-box"></div>
+                        <div class="template-box"></div>
+                    </div>
+                    <p>6 Fotos Grid</p>
+                </div>
+
+                <div class="template-option" data-template="polaroid">
+                    <div class="template-preview template-polaroid">
+                        <div class="template-box"></div>
+                        <div class="template-box"></div>
+                        <div class="template-box"></div>
+                    </div>
+                    <p>Estilo Polaroid</p>
                 </div>
             </div>
         </div>
