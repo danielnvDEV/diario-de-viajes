@@ -10,63 +10,159 @@
     <div class="container">
         <h1 class="title">Mi Diario de Viajes</h1>
 
-        <div class="notebook">
-            <div class="notebook-cover"></div>
+        <!-- Cuaderno 3D -->
+        <div class="notebook-3d">
+            <!-- Portada frontal -->
+            <div class="book-cover front-cover">
+                <div class="cover-content">
+                    <div class="cover-title" id="coverTitle" contenteditable="true">Mi Diario de Viajes</div>
+                    <div class="cover-subtitle" id="coverSubtitle" contenteditable="true">Memorias y Aventuras</div>
+                    <div class="cover-decoration"></div>
+                    <button class="customize-cover-btn" id="customizeCoverBtn">🎨 Personalizar Portada</button>
+                </div>
+            </div>
 
+            <!-- Contraportada -->
+            <div class="book-cover back-cover"></div>
+
+            <!-- Lomo del libro -->
+            <div class="book-spine">
+                <div class="spine-text">MI DIARIO DE VIAJES</div>
+            </div>
+
+            <!-- Páginas internas -->
             <div class="pages-container">
                 <!-- Página izquierda -->
                 <div class="page left-page">
-                    <div class="page-content">
+                    <div class="page-content" id="leftPageContent">
                         <h2>Bienvenido</h2>
-                        <p>Guarda tus recuerdos de viajes aquí</p>
-                        <div class="decorative-line"></div>
+                        <p>Comienza tu aventura</p>
                     </div>
                 </div>
 
                 <!-- Página derecha (la que se voltea) -->
                 <div class="page right-page" id="currentPage">
                     <div class="page-front">
-                        <div class="page-content">
-                            <input type="text" class="location-input" placeholder="Nombre del lugar o país" id="location-0">
-                            <div class="photo-upload-area" id="photo-area-0">
-                                <label for="photo-input-0" class="upload-label">
-                                    <span class="upload-icon">📷</span>
-                                    <span class="upload-text">Click para agregar foto</span>
-                                </label>
-                                <input type="file" id="photo-input-0" class="photo-input" accept="image/*">
-                                <img class="uploaded-photo" id="preview-0" style="display: none;">
-                            </div>
-                            <textarea class="notes-area" placeholder="Escribe tus recuerdos aquí..." id="notes-0"></textarea>
+                        <div class="page-content" id="frontPageContent">
+                            <!-- Contenido dinámico -->
                         </div>
                     </div>
                     <div class="page-back">
-                        <div class="page-content">
-                            <input type="text" class="location-input" placeholder="Nombre del lugar o país" id="location-1">
-                            <div class="photo-upload-area" id="photo-area-1">
-                                <label for="photo-input-1" class="upload-label">
-                                    <span class="upload-icon">📷</span>
-                                    <span class="upload-text">Click para agregar foto</span>
-                                </label>
-                                <input type="file" id="photo-input-1" class="photo-input" accept="image/*">
-                                <img class="uploaded-photo" id="preview-1" style="display: none;">
-                            </div>
-                            <textarea class="notes-area" placeholder="Escribe tus recuerdos aquí..." id="notes-1"></textarea>
+                        <div class="page-content" id="backPageContent">
+                            <!-- Contenido dinámico -->
                         </div>
                     </div>
                 </div>
             </div>
-
-            <div class="spine"></div>
         </div>
 
+        <!-- Controles de navegación -->
         <div class="controls">
             <button class="nav-btn" id="prevBtn" disabled>← Anterior</button>
-            <span class="page-counter" id="pageCounter">Página 1</span>
+            <span class="page-counter" id="pageCounter">Portada</span>
             <button class="nav-btn" id="nextBtn">Siguiente →</button>
         </div>
 
-        <div class="add-page-section">
-            <button class="add-page-btn" id="addPageBtn">+ Agregar Nueva Página</button>
+        <!-- Botones de acción -->
+        <div class="action-buttons">
+            <button class="action-btn" id="addPageBtn">+ Agregar Página</button>
+            <button class="action-btn" id="viewIndexBtn">📑 Ver Índice</button>
+        </div>
+    </div>
+
+    <!-- Modal para personalizar portada -->
+    <div class="modal" id="coverModal">
+        <div class="modal-content">
+            <span class="close-modal" id="closeCoverModal">&times;</span>
+            <h2>Personalizar Portada</h2>
+
+            <div class="customization-section">
+                <label>Color de fondo:</label>
+                <div class="color-options">
+                    <button class="color-btn" data-color="#8b4513" style="background: #8b4513;"></button>
+                    <button class="color-btn" data-color="#2c3e50" style="background: #2c3e50;"></button>
+                    <button class="color-btn" data-color="#34495e" style="background: #34495e;"></button>
+                    <button class="color-btn" data-color="#8e44ad" style="background: #8e44ad;"></button>
+                    <button class="color-btn" data-color="#16a085" style="background: #16a085;"></button>
+                    <button class="color-btn" data-color="#c0392b" style="background: #c0392b;"></button>
+                </div>
+            </div>
+
+            <div class="customization-section">
+                <label>Textura:</label>
+                <div class="texture-options">
+                    <button class="texture-btn" data-texture="leather">Cuero</button>
+                    <button class="texture-btn" data-texture="fabric">Tela</button>
+                    <button class="texture-btn" data-texture="paper">Papel</button>
+                    <button class="texture-btn" data-texture="smooth">Liso</button>
+                </div>
+            </div>
+
+            <div class="customization-section">
+                <label>Imagen de portada:</label>
+                <input type="file" id="coverImageInput" accept="image/*">
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para plantillas de fotos -->
+    <div class="modal" id="templateModal">
+        <div class="modal-content">
+            <span class="close-modal" id="closeTemplateModal">&times;</span>
+            <h2>Selecciona una Plantilla</h2>
+
+            <div class="template-grid">
+                <div class="template-option" data-template="single">
+                    <div class="template-preview template-single">
+                        <div class="template-box"></div>
+                    </div>
+                    <p>1 Foto Grande</p>
+                </div>
+
+                <div class="template-option" data-template="double-horizontal">
+                    <div class="template-preview template-double-h">
+                        <div class="template-box"></div>
+                        <div class="template-box"></div>
+                    </div>
+                    <p>2 Fotos Horizontal</p>
+                </div>
+
+                <div class="template-option" data-template="double-vertical">
+                    <div class="template-preview template-double-v">
+                        <div class="template-box"></div>
+                        <div class="template-box"></div>
+                    </div>
+                    <p>2 Fotos Vertical</p>
+                </div>
+
+                <div class="template-option" data-template="triple">
+                    <div class="template-preview template-triple">
+                        <div class="template-box"></div>
+                        <div class="template-box"></div>
+                        <div class="template-box"></div>
+                    </div>
+                    <p>3 Fotos</p>
+                </div>
+
+                <div class="template-option" data-template="quad">
+                    <div class="template-preview template-quad">
+                        <div class="template-box"></div>
+                        <div class="template-box"></div>
+                        <div class="template-box"></div>
+                        <div class="template-box"></div>
+                    </div>
+                    <p>4 Fotos</p>
+                </div>
+
+                <div class="template-option" data-template="collage">
+                    <div class="template-preview template-collage">
+                        <div class="template-box"></div>
+                        <div class="template-box"></div>
+                        <div class="template-box"></div>
+                    </div>
+                    <p>Collage</p>
+                </div>
+            </div>
         </div>
     </div>
 
