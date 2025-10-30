@@ -64,6 +64,20 @@
             </svg>
         </div>
 
+        <!-- Flechas de navegación para modo visualización -->
+        <div class="nav-arrows" id="navArrows">
+            <button class="arrow-btn left-arrow" id="leftArrow" title="Página anterior">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+                </svg>
+            </button>
+            <button class="arrow-btn right-arrow" id="rightArrow" title="Página siguiente">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+                </svg>
+            </button>
+        </div>
+
         <!-- Controles de navegación (Modo Edición) -->
         <div class="controls edit-mode-controls" style="display: none;">
             <button class="nav-btn" id="prevBtn" disabled>← Anterior</button>
@@ -71,29 +85,10 @@
             <button class="nav-btn" id="nextBtn">Siguiente →</button>
         </div>
 
-        <!-- Mensaje de ayuda (Modo Visualización) -->
-        <div class="view-mode-hint" id="viewModeHint">
-            <p>💡 Arrastra las esquinas de las páginas para pasar hojas</p>
-        </div>
-
         <!-- Botones de acción (Modo Edición) -->
         <div class="action-buttons edit-mode-controls" style="display: none;">
             <button class="action-btn" id="addPageBtn">+ Agregar Página</button>
             <button class="action-btn" id="viewIndexBtn">📑 Ver Índice</button>
-        </div>
-
-        <!-- Esquinas interactivas mejoradas para arrastrar páginas -->
-        <div class="page-corner-area right" id="cornerAreaRight">
-            <div class="corner-visual">
-                <div class="corner-fold"></div>
-                <div class="corner-icon">▶</div>
-            </div>
-        </div>
-        <div class="page-corner-area left" id="cornerAreaLeft">
-            <div class="corner-visual">
-                <div class="corner-fold"></div>
-                <div class="corner-icon">◀</div>
-            </div>
         </div>
     </div>
 

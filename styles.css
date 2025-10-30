@@ -430,8 +430,13 @@ body {
 }
 
 /* Plantilla: 1 foto grande */
-.template-single {
+.single {
     flex-direction: column;
+}
+
+.single .photo-slot {
+    width: 100%;
+    height: 100%;
 }
 
 .photo-slot {
@@ -481,103 +486,141 @@ body {
 }
 
 /* Plantilla: 2 fotos horizontal */
-.template-double-h {
+.double-horizontal {
     flex-direction: row;
 }
 
+.double-horizontal .photo-slot {
+    width: calc(50% - 5px);
+    height: 100%;
+}
+
 /* Plantilla: 2 fotos vertical */
-.template-double-v {
+.double-vertical {
     flex-direction: column;
+}
+
+.double-vertical .photo-slot {
+    width: 100%;
+    height: calc(50% - 5px);
 }
 
 /* Plantilla: 3 fotos */
-.template-triple {
+.triple {
     flex-wrap: wrap;
+    flex-direction: row;
 }
 
-.template-triple .photo-slot:first-child {
+.triple .photo-slot {
+    width: calc(50% - 5px);
+    height: calc(50% - 5px);
+}
+
+.triple .photo-slot:first-child {
     width: 100%;
-    min-height: 150px;
+    height: calc(50% - 5px);
 }
 
 /* Plantilla: 4 fotos */
-.template-quad {
+.quad {
     flex-wrap: wrap;
+    flex-direction: row;
 }
 
-.template-quad .photo-slot {
+.quad .photo-slot {
     width: calc(50% - 5px);
+    height: calc(50% - 5px);
 }
 
 /* Plantilla: Collage */
-.template-collage {
+.collage {
     flex-wrap: wrap;
+    flex-direction: row;
 }
 
-.template-collage .photo-slot:first-child {
-    width: 60%;
+.collage .photo-slot {
+    height: 100%;
 }
 
-.template-collage .photo-slot:not(:first-child) {
-    width: calc(40% - 10px);
+.collage .photo-slot:first-child {
+    width: calc(60% - 5px);
+    height: 100%;
+}
+
+.collage .photo-slot:not(:first-child) {
+    width: calc(40% - 5px);
+    height: calc(50% - 5px);
 }
 
 /* Plantilla: Panorámica */
-.template-panoramic {
+.panoramic {
     flex-direction: column;
 }
 
-.template-panoramic .photo-slot {
+.panoramic .photo-slot {
+    width: 100%;
+    height: 100%;
     min-height: 200px;
 }
 
 /* Plantilla: Retrato vertical */
-.template-portrait {
+.portrait {
     flex-direction: column;
 }
 
-.template-portrait .photo-slot {
+.portrait .photo-slot {
+    width: 100%;
+    height: 100%;
     min-height: 350px;
 }
 
 /* Plantilla: 3 fotos horizontal */
-.template-triple-horizontal {
+.triple-horizontal {
     flex-direction: row;
 }
 
+.triple-horizontal .photo-slot {
+    width: calc(33.333% - 7px);
+    height: 100%;
+}
+
 /* Plantilla: Grid 5 fotos */
-.template-grid-5 {
+.grid-5 {
     flex-wrap: wrap;
+    flex-direction: row;
 }
 
-.template-grid-5 .photo-slot:first-child {
-    width: 100%;
-    min-height: 140px;
-}
-
-.template-grid-5 .photo-slot:not(:first-child) {
+.grid-5 .photo-slot {
     width: calc(50% - 5px);
-    min-height: 120px;
+    height: calc(50% - 5px);
+}
+
+.grid-5 .photo-slot:first-child {
+    width: 100%;
+    height: calc(50% - 5px);
 }
 
 /* Plantilla: Grid 6 fotos */
-.template-grid-6 {
+.grid-6 {
     flex-wrap: wrap;
+    flex-direction: row;
 }
 
-.template-grid-6 .photo-slot {
+.grid-6 .photo-slot {
     width: calc(33.333% - 7px);
-    min-height: 120px;
+    height: calc(50% - 5px);
 }
 
 /* Plantilla: Polaroid */
-.template-polaroid {
+.polaroid {
     flex-wrap: wrap;
+    flex-direction: row;
     gap: 12px;
 }
 
-.template-polaroid .photo-slot {
+.polaroid .photo-slot {
     width: calc(33.333% - 8px);
+    height: 100%;
     min-height: 140px;
     background: white;
     padding: 10px 10px 30px 10px;
@@ -585,15 +628,15 @@ body {
     transform: rotate(-2deg);
 }
 
-.template-polaroid .photo-slot:nth-child(2) {
+.polaroid .photo-slot:nth-child(2) {
     transform: rotate(1deg);
 }
 
-.template-polaroid .photo-slot:nth-child(3) {
+.polaroid .photo-slot:nth-child(3) {
     transform: rotate(-1deg);
 }
 
-.template-polaroid .photo-slot img {
+.polaroid .photo-slot img {
     border-radius: 0;
 }
 
@@ -1017,195 +1060,61 @@ body {
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
-/* Mensaje de ayuda en modo visualización */
-.view-mode-hint {
+/* Flechas de navegación */
+.nav-arrows {
     position: fixed;
-    top: 30px;
+    top: 50%;
+    width: 100%;
+    max-width: 1000px;
     left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.8);
-    color: #f0e6d2;
-    padding: 12px 30px;
-    border-radius: 25px;
-    backdrop-filter: blur(10px);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-    z-index: 999;
-    animation: fadeInDown 0.5s ease;
-}
-
-.view-mode-hint p {
-    margin: 0;
-    font-size: 1em;
-    font-style: italic;
-}
-
-.edit-mode-controls .view-mode-hint {
-    display: none;
-}
-
-@keyframes fadeInDown {
-    from {
-        opacity: 0;
-        transform: translateX(-50%) translateY(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(-50%) translateY(0);
-    }
-}
-
-/* ====== ESQUINAS MEJORADAS PARA ARRASTRAR PÁGINAS ====== */
-.page-corner-area {
-    position: fixed;
-    width: 180px;
-    height: 180px;
-    cursor: grab;
-    z-index: 500;
-    transition: all 0.3s ease;
-    opacity: 0;
+    transform: translate(-50%, -50%);
+    display: flex;
+    justify-content: space-between;
     pointer-events: none;
+    z-index: 999;
 }
 
-.page-corner-area.visible {
-    opacity: 1;
+.arrow-btn {
+    width: 50px;
+    height: 50px;
+    background: rgba(141, 110, 99, 0.9);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #f4e4c1;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    transition: all 0.3s ease;
     pointer-events: all;
 }
 
-.page-corner-area:active {
-    cursor: grabbing;
+.arrow-btn:hover:not(:disabled) {
+    background: rgba(161, 136, 127, 1);
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
 }
 
-.page-corner-area.right {
-    bottom: 150px;
-    right: calc(50% - 420px);
+.arrow-btn:disabled {
+    background: rgba(141, 110, 99, 0.3);
+    cursor: not-allowed;
+    opacity: 0.5;
 }
 
-.page-corner-area.left {
-    bottom: 150px;
-    left: calc(50% - 420px);
+.arrow-btn svg {
+    width: 30px;
+    height: 30px;
 }
 
-.corner-visual {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    transition: all 0.3s ease;
+.left-arrow {
+    margin-left: -60px;
 }
 
-.page-corner-area.right .corner-visual {
-    bottom: 0;
-    right: 0;
+.right-arrow {
+    margin-right: -60px;
 }
 
-.page-corner-area.left .corner-visual {
-    bottom: 0;
-    left: 0;
-}
-
-.corner-fold {
-    position: absolute;
-    width: 0;
-    height: 0;
-    border-style: solid;
-    opacity: 0.7;
-    transition: all 0.3s ease;
-}
-
-.page-corner-area.right .corner-fold {
-    bottom: 0;
-    right: 0;
-    border-width: 0 0 100px 100px;
-    border-color: transparent transparent rgba(240, 230, 210, 0.3) transparent;
-}
-
-.page-corner-area.left .corner-fold {
-    bottom: 0;
-    left: 0;
-    border-width: 0 100px 100px 0;
-    border-color: transparent rgba(240, 230, 210, 0.3) transparent transparent;
-}
-
-.page-corner-area:hover .corner-fold {
-    opacity: 1;
-}
-
-.page-corner-area.right:hover .corner-fold {
-    border-width: 0 0 120px 120px;
-}
-
-.page-corner-area.left:hover .corner-fold {
-    border-width: 0 120px 120px 0;
-}
-
-.corner-icon {
-    position: absolute;
-    font-size: 2.5em;
-    color: rgba(240, 230, 210, 0.6);
-    animation: pulseCorner 2s ease-in-out infinite;
-    text-shadow: 0 0 15px rgba(240, 230, 210, 0.8);
-    transition: all 0.3s ease;
-    user-select: none;
-}
-
-.page-corner-area.right .corner-icon {
-    bottom: 15px;
-    right: 20px;
-}
-
-.page-corner-area.left .corner-icon {
-    bottom: 15px;
-    left: 20px;
-}
-
-.page-corner-area:hover .corner-icon {
-    color: rgba(240, 230, 210, 1);
-    transform: scale(1.2);
-}
-
-@keyframes pulseCorner {
-    0%, 100% {
-        opacity: 0.6;
-        transform: scale(1);
-    }
-    50% {
-        opacity: 1;
-        transform: scale(1.15);
-    }
-}
-
-/* ====== EFECTO DE DOBLEZ DE PÁGINA ====== */
-.right-page.dragging {
-    transition: none !important;
-}
-
-.page-fold-effect {
-    position: absolute;
-    pointer-events: none;
-    z-index: 1000;
-}
-
-/* Efecto de sombra en el doblez */
-.right-page::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(
-        to left,
-        rgba(0, 0, 0, 0) 0%,
-        rgba(0, 0, 0, 0.1) 50%,
-        rgba(0, 0, 0, 0) 100%
-    );
-    opacity: 0;
-    transition: opacity 0.3s;
-    pointer-events: none;
-}
-
-.right-page.dragging::after {
-    opacity: var(--fold-shadow, 0);
-}
 
 /* Modo visualización - Deshabilitar edición */
 .view-mode .location-input,
