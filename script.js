@@ -659,7 +659,13 @@ function renderPhotoTemplate(template, photos, pageIndex) {
         'double-vertical': 2,
         'triple': 3,
         'quad': 4,
-        'collage': 3
+        'collage': 3,
+        'panoramic': 1,
+        'portrait': 1,
+        'triple-horizontal': 3,
+        'grid-5': 5,
+        'grid-6': 6,
+        'polaroid': 3
     };
 
     const numSlots = templates[template] || 1;
@@ -776,7 +782,13 @@ function selectTemplate(template) {
         'double-vertical': 2,
         'triple': 3,
         'quad': 4,
-        'collage': 3
+        'collage': 3,
+        'panoramic': 1,
+        'portrait': 1,
+        'triple-horizontal': 3,
+        'grid-5': 5,
+        'grid-6': 6,
+        'polaroid': 3
     };
 
     const numSlots = templates[template] || 1;
