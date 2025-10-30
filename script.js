@@ -1,6 +1,6 @@
 // ===== ESTADO DE LA APLICACIÓN =====
 let appState = {
-    currentPageIndex: 0, // 0 = portada, 1 = página vacía, 2 = índice, 3+ = páginas de contenido
+    currentPageIndex: 0, // 0 = portada, 1 = índice, 2+ = páginas de contenido
     viewMode: true, // true = visualización, false = edición
     coverData: {
         title: 'Mi Diario de Viajes',
@@ -348,8 +348,8 @@ function goToPage(pageIndex) {
 }
 
 function getTotalPages() {
-    // Portada + Página vacía + Índice + Páginas de contenido
-    return 3 + appState.pages.length;
+    // Portada + Índice + Páginas de contenido
+    return 2 + appState.pages.length;
 }
 
 // ===== ACTUALIZAR DISPLAY =====
@@ -364,11 +364,9 @@ function updateDisplay() {
     if (currentPageIndex === 0) {
         elements.pageCounter.textContent = 'Portada';
     } else if (currentPageIndex === 1) {
-        elements.pageCounter.textContent = 'Inicio';
-    } else if (currentPageIndex === 2) {
         elements.pageCounter.textContent = 'Índice';
     } else {
-        elements.pageCounter.textContent = `Página ${currentPageIndex - 2}`;
+        elements.pageCounter.textContent = `Página ${currentPageIndex - 1}`;
     }
 
     // Actualizar contenido de páginas
@@ -380,30 +378,25 @@ function updatePageContent() {
 
     // Determinar qué mostrar en la página izquierda
     if (currentPageIndex === 1) {
-        // Página vacía tras la portada
-        elements.leftPageContent.innerHTML = '<div style="height: 100%;"></div>';
-    } else if (currentPageIndex === 2) {
         // Mostrar página vacía a la izquierda del índice
         elements.leftPageContent.innerHTML = '<div style="height: 100%;"></div>';
-    } else if (currentPageIndex > 2) {
-        const leftContentPageIndex = currentPageIndex - 3;
-        if (leftContentPageIndex >= 0 && leftContentPageIndex < appState.pages.length) {
-            elements.leftPageContent.innerHTML = renderPage(appState.pages[leftContentPageIndex], false);
-        } else if (currentPageIndex === 3) {
-            // Primera página de contenido, mostrar el índice a la izquierda
+    } else if (currentPageIndex >= 2) {
+        const leftContentPageIndex = currentPageIndex - 2;
+        if (leftContentPageIndex === 0) {
+            // Si estamos en la primera página de contenido, mostrar el índice a la izquierda
             elements.leftPageContent.innerHTML = renderIndex();
+        } else if (leftContentPageIndex > 0 && leftContentPageIndex - 1 < appState.pages.length) {
+            // Mostrar la página anterior
+            elements.leftPageContent.innerHTML = renderPage(appState.pages[leftContentPageIndex - 1], false);
         }
     }
 
     // Determinar qué mostrar en la página derecha (frontal)
     if (currentPageIndex === 1) {
-        // Página vacía
-        elements.frontPageContent.innerHTML = '<div style="height: 100%;"></div>';
-    } else if (currentPageIndex === 2) {
         // Índice
         elements.frontPageContent.innerHTML = renderIndex();
-    } else if (currentPageIndex >= 3) {
-        const frontContentPageIndex = currentPageIndex - 3;
+    } else if (currentPageIndex >= 2) {
+        const frontContentPageIndex = currentPageIndex - 2;
         if (frontContentPageIndex >= 0 && frontContentPageIndex < appState.pages.length) {
             elements.frontPageContent.innerHTML = renderPage(appState.pages[frontContentPageIndex], !appState.viewMode);
             if (!appState.viewMode) {
@@ -414,18 +407,17 @@ function updatePageContent() {
 
     // Determinar qué mostrar en la página derecha (trasera)
     if (currentPageIndex === 1) {
-        // Índice
-        elements.backPageContent.innerHTML = renderIndex();
-    } else if (currentPageIndex === 2) {
-        const backContentPageIndex = 0;
-        if (backContentPageIndex < appState.pages.length) {
-            elements.backPageContent.innerHTML = renderPage(appState.pages[backContentPageIndex], !appState.viewMode);
+        // Primera página de contenido
+        if (appState.pages.length > 0) {
+            elements.backPageContent.innerHTML = renderPage(appState.pages[0], !appState.viewMode);
             if (!appState.viewMode) {
-                attachElementEventListeners(backContentPageIndex, 'back');
+                attachElementEventListeners(0, 'back');
             }
+        } else {
+            elements.backPageContent.innerHTML = '<p style="text-align: center; color: #bcaaa4; margin-top: 50px;">No hay páginas aún</p>';
         }
-    } else if (currentPageIndex >= 3) {
-        const backContentPageIndex = currentPageIndex - 2;
+    } else if (currentPageIndex >= 2) {
+        const backContentPageIndex = currentPageIndex - 1;
         if (backContentPageIndex < appState.pages.length) {
             elements.backPageContent.innerHTML = renderPage(appState.pages[backContentPageIndex], !appState.viewMode);
             if (!appState.viewMode) {
@@ -446,7 +438,7 @@ function renderIndex() {
             const title = titleElement ? titleElement.content : `Página ${index + 1}`;
             const pageNum = index + 1;
             return `
-                <li class="index-item" data-page-index="${index + 3}">
+                <li class="index-item" data-page-index="${index + 2}">
                     <span class="index-item-title">${title}</span>
                     <span class="index-item-page">Pág. ${pageNum}</span>
                 </li>
@@ -487,6 +479,15 @@ function renderElement(element, editable) {
     const { id, type, x, y, width, height, content } = element;
     const deleteBtn = editable ? '<span class="delete-btn" onclick="deleteElement(' + id + ')">×</span>' : '';
 
+    // Resize handles solo para elementos que pueden ser redimensionados
+    const canResize = type === 'image' || type === 'text' || type === 'title';
+    const resizeHandles = editable && canResize ? `
+        <div class="resize-handle nw" data-handle="nw"></div>
+        <div class="resize-handle ne" data-handle="ne"></div>
+        <div class="resize-handle sw" data-handle="sw"></div>
+        <div class="resize-handle se" data-handle="se"></div>
+    ` : '';
+
     let innerContent = '';
     const editableAttr = editable ? 'contenteditable="true"' : '';
 
@@ -523,6 +524,7 @@ function renderElement(element, editable) {
              data-element-id="${id}"
              style="left: ${x}px; top: ${y}px; ${widthStyle} ${heightStyle}">
             ${deleteBtn}
+            ${resizeHandles}
             ${innerContent}
         </div>
     `;
@@ -599,10 +601,10 @@ function getCurrentEditablePageIndex(pageContentElement) {
     const { currentPageIndex } = appState;
 
     if (pageContentElement === elements.frontPageContent) {
-        return currentPageIndex - 3;
-    } else if (pageContentElement === elements.backPageContent) {
-        if (currentPageIndex === 2) return 0;
         return currentPageIndex - 2;
+    } else if (pageContentElement === elements.backPageContent) {
+        if (currentPageIndex === 1) return 0;
+        return currentPageIndex - 1;
     }
 
     return -1;
@@ -617,10 +619,16 @@ function createNewElement(type, x, y) {
         content: getDefaultContent(type)
     };
 
-    // Agregar dimensiones para imágenes
+    // Agregar dimensiones iniciales según el tipo
     if (type === 'image') {
         element.width = 200;
         element.height = 150;
+    } else if (type === 'title') {
+        element.width = 250;
+        element.height = 60;
+    } else if (type === 'text') {
+        element.width = 200;
+        element.height = 100;
     }
 
     return element;
@@ -655,11 +663,36 @@ function attachElementEventListeners(pageIndex, side) {
     // Listener para mover elementos (drag dentro de la página)
     pageContent.querySelectorAll('.placed-element').forEach(placedEl => {
         let isDragging = false;
-        let startX, startY, initialX, initialY;
+        let isResizing = false;
+        let resizeHandle = null;
+        let startX, startY, initialX, initialY, initialWidth, initialHeight;
+
+        // Listener para resize handles
+        placedEl.querySelectorAll('.resize-handle').forEach(handle => {
+            handle.addEventListener('mousedown', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+
+                isResizing = true;
+                resizeHandle = e.target.getAttribute('data-handle');
+                const elementId = parseInt(placedEl.getAttribute('data-element-id'));
+                appState.selectedElement = elementId;
+
+                startX = e.clientX;
+                startY = e.clientY;
+                initialX = placedEl.offsetLeft;
+                initialY = placedEl.offsetTop;
+                initialWidth = placedEl.offsetWidth;
+                initialHeight = placedEl.offsetHeight;
+
+                placedEl.classList.add('selected');
+            });
+        });
 
         placedEl.addEventListener('mousedown', (e) => {
-            // Evitar drag si estamos haciendo click en el botón delete o en un contenteditable
+            // Evitar drag si estamos haciendo click en el botón delete, resize handle o en un contenteditable
             if (e.target.classList.contains('delete-btn') ||
+                e.target.classList.contains('resize-handle') ||
                 e.target.hasAttribute('contenteditable') ||
                 e.target.tagName === 'INPUT') {
                 return;
@@ -679,27 +712,86 @@ function attachElementEventListeners(pageIndex, side) {
         });
 
         document.addEventListener('mousemove', (e) => {
-            if (!isDragging) return;
+            if (isResizing) {
+                const deltaX = e.clientX - startX;
+                const deltaY = e.clientY - startY;
+                const pageRect = pageContent.getBoundingClientRect();
 
-            const deltaX = e.clientX - startX;
-            const deltaY = e.clientY - startY;
+                let newWidth = initialWidth;
+                let newHeight = initialHeight;
+                let newX = initialX;
+                let newY = initialY;
 
-            let newX = initialX + deltaX;
-            let newY = initialY + deltaY;
+                const minSize = 50;
 
-            // Limitar dentro de la página (establecer límites)
-            const pageRect = pageContent.getBoundingClientRect();
-            const elementRect = placedEl.getBoundingClientRect();
+                switch (resizeHandle) {
+                    case 'se':
+                        newWidth = Math.max(minSize, initialWidth + deltaX);
+                        newHeight = Math.max(minSize, initialHeight + deltaY);
+                        break;
+                    case 'sw':
+                        newWidth = Math.max(minSize, initialWidth - deltaX);
+                        newHeight = Math.max(minSize, initialHeight + deltaY);
+                        newX = Math.min(initialX + deltaX, initialX + initialWidth - minSize);
+                        break;
+                    case 'ne':
+                        newWidth = Math.max(minSize, initialWidth + deltaX);
+                        newHeight = Math.max(minSize, initialHeight - deltaY);
+                        newY = Math.min(initialY + deltaY, initialY + initialHeight - minSize);
+                        break;
+                    case 'nw':
+                        newWidth = Math.max(minSize, initialWidth - deltaX);
+                        newHeight = Math.max(minSize, initialHeight - deltaY);
+                        newX = Math.min(initialX + deltaX, initialX + initialWidth - minSize);
+                        newY = Math.min(initialY + deltaY, initialY + initialHeight - minSize);
+                        break;
+                }
 
-            newX = Math.max(0, Math.min(newX, pageRect.width - elementRect.width));
-            newY = Math.max(0, Math.min(newY, pageRect.height - elementRect.height));
+                // Limitar dentro de la página
+                newWidth = Math.min(newWidth, pageRect.width - newX);
+                newHeight = Math.min(newHeight, pageRect.height - newY);
 
-            placedEl.style.left = newX + 'px';
-            placedEl.style.top = newY + 'px';
+                placedEl.style.width = newWidth + 'px';
+                placedEl.style.height = newHeight + 'px';
+                placedEl.style.left = newX + 'px';
+                placedEl.style.top = newY + 'px';
+
+            } else if (isDragging) {
+                const deltaX = e.clientX - startX;
+                const deltaY = e.clientY - startY;
+
+                let newX = initialX + deltaX;
+                let newY = initialY + deltaY;
+
+                // Limitar dentro de la página (establecer límites)
+                const pageRect = pageContent.getBoundingClientRect();
+                const elementRect = placedEl.getBoundingClientRect();
+
+                newX = Math.max(0, Math.min(newX, pageRect.width - elementRect.width));
+                newY = Math.max(0, Math.min(newY, pageRect.height - elementRect.height));
+
+                placedEl.style.left = newX + 'px';
+                placedEl.style.top = newY + 'px';
+            }
         });
 
         document.addEventListener('mouseup', () => {
-            if (isDragging) {
+            if (isResizing) {
+                isResizing = false;
+
+                const elementId = appState.selectedElement;
+                const newX = parseInt(placedEl.style.left);
+                const newY = parseInt(placedEl.style.top);
+                const newWidth = parseInt(placedEl.style.width);
+                const newHeight = parseInt(placedEl.style.height);
+
+                updateElementSize(pageIndex, elementId, newX, newY, newWidth, newHeight);
+
+                placedEl.classList.remove('selected');
+                appState.selectedElement = null;
+                resizeHandle = null;
+
+            } else if (isDragging) {
                 isDragging = false;
 
                 const elementId = appState.selectedElement;
@@ -738,10 +830,24 @@ function updateElementPosition(pageIndex, elementId, x, y) {
     }
 }
 
+function updateElementSize(pageIndex, elementId, x, y, width, height) {
+    const page = appState.pages[pageIndex];
+    if (!page || !page.elements) return;
+
+    const element = page.elements.find(el => el.id === elementId);
+    if (element) {
+        element.x = x;
+        element.y = y;
+        element.width = width;
+        element.height = height;
+        saveData();
+    }
+}
+
 // Función global para eliminar elementos (llamada desde HTML)
 window.deleteElement = function(elementId) {
     const { currentPageIndex } = appState;
-    const pageIndex = currentPageIndex - 3;
+    const pageIndex = currentPageIndex - 2;
 
     if (pageIndex < 0 || pageIndex >= appState.pages.length) return;
 
@@ -761,7 +867,7 @@ window.handleImageUpload = function(event, elementId) {
     const reader = new FileReader();
     reader.onload = (e) => {
         const { currentPageIndex } = appState;
-        const pageIndex = currentPageIndex - 3;
+        const pageIndex = currentPageIndex - 2;
 
         if (pageIndex < 0 || pageIndex >= appState.pages.length) return;
 
@@ -796,7 +902,7 @@ function addNewPage() {
 
 // ===== MOSTRAR ÍNDICE =====
 function showIndex() {
-    goToPage(2); // El índice está en la posición 2
+    goToPage(1); // El índice está en la posición 1
 }
 
 // ===== INICIAR APLICACIÓN =====

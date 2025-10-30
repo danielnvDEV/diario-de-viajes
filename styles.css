@@ -22,6 +22,13 @@ body {
     gap: 30px;
     max-width: 1200px;
     width: 100%;
+    transition: margin-left 0.3s ease;
+}
+
+/* Desplazar contenido cuando el menú lateral está abierto */
+body:has(.sidebar-menu[style*="display: flex"]) .container,
+body:has(.sidebar-menu:not([style*="display: none"])) .container {
+    margin-left: 140px;
 }
 
 .title {
@@ -1281,6 +1288,47 @@ body {
 .placed-element:hover .delete-btn,
 .placed-element.selected .delete-btn {
     display: block;
+}
+
+/* Resize handles */
+.resize-handle {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: #3498db;
+    border: 2px solid white;
+    border-radius: 50%;
+    display: none;
+    z-index: 11;
+}
+
+.placed-element:hover .resize-handle,
+.placed-element.selected .resize-handle {
+    display: block;
+}
+
+.resize-handle.nw {
+    top: -6px;
+    left: -6px;
+    cursor: nw-resize;
+}
+
+.resize-handle.ne {
+    top: -6px;
+    right: -6px;
+    cursor: ne-resize;
+}
+
+.resize-handle.sw {
+    bottom: -6px;
+    left: -6px;
+    cursor: sw-resize;
+}
+
+.resize-handle.se {
+    bottom: -6px;
+    right: -6px;
+    cursor: se-resize;
 }
 
 /* Tipos de elementos */
